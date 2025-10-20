@@ -26,7 +26,7 @@ from PyQt6.QtGui import (
 )
 from PyQt6.QtWidgets import (
     QApplication, QDialog, QLabel, QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout,
-    QWidget, QFrame, QGridLayout, QSizePolicy
+    QWidget, QFrame, QGridLayout, QSizePolicy, QGraphicsDropShadowEffect
 )
 
 # ======================= 基本信息 =======================
@@ -181,34 +181,150 @@ class Theme:
         app.setStyleSheet(f"""
         QWidget{{ color:{Theme.TXT.name()}; font-size:12pt; background: transparent; }}
         .Card{{
-            background: rgba(255,255,255,0.92);
-            border: 1px solid rgba(140,150,175,0.18);
-            border-radius: 14px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);  /* 手动添加阴影 */
+            background: rgba(255,255,255,0.84);
+            border: 1px solid rgba(120,135,170,0.22);
+            border-radius: 18px;
+            box-shadow: 0 14px 36px rgba(15,23,42,0.12);
         }}
         QLabel#H1{{ font-size:17pt; font-weight:800; letter-spacing:.2px; }}
         QLabel#Sub{{ color:{Theme.MUT.name()}; }}
         QLabel#Hint{{ color:{Theme.MUT.name()}; font-size:11pt; }}
         QLabel#Banner{{ padding:8px 12px; border-radius:10px; font-weight:700; }}
         QLineEdit{{
-            background: rgba(240,248,255,0.98);
-            border: 1px solid rgba(140,150,175,0.28);
-            border-radius:10px; padding:7px 10px; min-height:32px; font-size:13pt;
+            background: rgba(255,255,255,0.70);
+            border: 1px solid rgba(135,150,185,0.38);
+            border-radius:14px;
+            padding:8px 14px;
+            min-height:36px;
+            font-size:13pt;
+            color: rgba(6,8,16,0.94);
+            selection-background-color: rgba(120,170,255,0.40);
+            selection-color: rgba(6,8,16,0.98);
         }}
-        QLineEdit:focus{{ border:1px solid rgba(120,170,255,0.85); }}
+        QLineEdit:hover{{
+            background: rgba(255,255,255,0.76);
+            border:1px solid rgba(120,170,255,0.60);
+        }}
+        QLineEdit:focus{{
+            border:1px solid rgba(120,170,255,0.92);
+            background: rgba(255,255,255,0.82);
+        }}
+        QLineEdit::placeholder{{ color: rgba(12,12,16,0.48); }}
         QLineEdit[readOnly="true"]{{
-            color:#D6ECFF; font-family:Consolas,'Cascadia Mono','JetBrains Mono',monospace;
-            letter-spacing:.5px; font-size:13pt;
+            color: rgba(70,120,180,0.94);
+            font-family:Consolas,'Cascadia Mono','JetBrains Mono',monospace;
+            letter-spacing:.6px;
+            font-size:13pt;
+            background: rgba(240,248,255,0.42);
         }}
-        QPushButton{{ min-height:32px; padding:0 14px; border-radius:10px; font-weight:700; letter-spacing:.2px; }}
+        QPushButton{{
+            min-height:38px;
+            padding:0 24px;
+            border-radius:20px;
+            font-weight:700;
+            letter-spacing:.28px;
+            color:rgba(28,28,30,0.90);
+            background: qlineargradient(x1:0,y1:0,x2:0,y2:1,
+                stop:0 rgba(255,255,255,0.74),
+                stop:1 rgba(255,255,255,0.28)
+            );
+            border:1px solid rgba(255,255,255,0.62);
+        }}
+        QPushButton:hover{{
+            color:rgba(0,0,0,0.94);
+            border:1px solid rgba(255,255,255,0.86);
+            background: qlineargradient(x1:0,y1:0,x2:0,y2:1,
+                stop:0 rgba(255,255,255,0.86),
+                stop:1 rgba(255,255,255,0.44)
+            );
+        }}
+        QPushButton:pressed{{
+            color:rgba(0,0,0,0.80);
+            border:1px solid rgba(210,220,235,0.78);
+            background: qlineargradient(x1:0,y1:0,x2:0,y2:1,
+                stop:0 rgba(236,238,244,0.76),
+                stop:1 rgba(218,222,234,0.40)
+            );
+        }}
+        QPushButton:disabled{{
+            color:rgba(28,28,30,0.35);
+            background: rgba(255,255,255,0.20);
+            border:1px solid rgba(255,255,255,0.24);
+        }}
         QPushButton#Primary{{
-            border:none; color:white;
-            background: qlineargradient(x1:0,y1:0,x2:1,y2:1, stop:0 {Theme.A1.name()}, stop:.5 {Theme.A2.name()}, stop:1 {Theme.A3.name()});
+            color:rgba(255,255,255,0.97);
+            border:1px solid rgba(255,255,255,0.88);
+            background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
+                stop:0 rgba({Theme.A1.red()},{Theme.A1.green()},{Theme.A1.blue()},0.76),
+                stop:1 rgba({Theme.A2.red()},{Theme.A2.green()},{Theme.A2.blue()},0.78)
+            );
         }}
-        QPushButton#Primary:disabled{{ background:rgba(140,150,175,0.38); color:rgba(255,255,255,0.75); }}
-        QPushButton#Secondary{{ background:rgba(46,50,62,0.92); border:1px solid rgba(140,150,175,0.30); }}
-        QPushButton#Secondary:hover{{ background:rgba(58,62,76,0.98); }}
+        QPushButton#Primary:hover{{
+            background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
+                stop:0 rgba({Theme.A1.red()},{Theme.A1.green()},{Theme.A1.blue()},0.90),
+                stop:1 rgba({Theme.A2.red()},{Theme.A2.green()},{Theme.A2.blue()},0.92)
+            );
+        }}
+        QPushButton#Primary:pressed{{
+            background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
+                stop:0 rgba({Theme.A1.red()},{Theme.A1.green()},{Theme.A1.blue()},0.66),
+                stop:1 rgba({Theme.A2.red()},{Theme.A2.green()},{Theme.A2.blue()},0.68)
+            );
+        }}
+        QPushButton#Primary:disabled{{
+            color:rgba(255,255,255,0.55);
+            border:1px solid rgba(255,255,255,0.35);
+            background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
+                stop:0 rgba({Theme.A1.red()},{Theme.A1.green()},{Theme.A1.blue()},0.28),
+                stop:1 rgba({Theme.A2.red()},{Theme.A2.green()},{Theme.A2.blue()},0.28)
+            );
+        }}
+        QPushButton#Secondary{{
+            color:rgba(20,22,32,0.90);
+            background: rgba(255,255,255,0.36);
+            border:1px solid rgba(255,255,255,0.64);
+        }}
+        QPushButton#Secondary:hover{{
+            color:rgba(0,0,0,0.94);
+            background: rgba(255,255,255,0.46);
+        }}
+        QPushButton#Secondary:pressed{{
+            color:rgba(0,0,0,0.78);
+            background: rgba(255,255,255,0.30);
+        }}
+        QPushButton#MacMin, QPushButton#MacClose{{
+            min-height:0px;
+            min-width:0px;
+            padding:0px;
+            margin:0px;
+            border-radius:8px;
+            border:1px solid rgba(255,255,255,0.45);
+            background: transparent;
+        }}
+        QPushButton#MacMin{{ background: qradialgradient(cx:0.3,cy:0.3,radius:0.9,stop:0 #ffe29d, stop:1 #fbbc40); }}
+        QPushButton#MacClose{{ background: qradialgradient(cx:0.3,cy:0.3,radius:0.9,stop:0 #ff9a9e, stop:1 #ff5f57); }}
+        QPushButton#MacMin:hover{{ background: qradialgradient(cx:0.3,cy:0.3,radius:0.9,stop:0 #fff1c7, stop:1 #fdc55b); }}
+        QPushButton#MacClose:hover{{ background: qradialgradient(cx:0.3,cy:0.3,radius:0.9,stop:0 #ffc0c4, stop:1 #ff746b); }}
+        QPushButton#MacMin:pressed{{ background: qradialgradient(cx:0.3,cy:0.3,radius:0.9,stop:0 #ffe6a6, stop:1 #f0ab32); }}
+        QPushButton#MacClose:pressed{{ background: qradialgradient(cx:0.3,cy:0.3,radius:0.9,stop:0 #ffaaa9, stop:1 #f54e49); }}
         """)
+
+    @staticmethod
+    def elevate_button(btn: QPushButton, blur: int = 24, y_offset: int = 6, alpha: int = 65):
+        effect = QGraphicsDropShadowEffect(btn)
+        effect.setBlurRadius(blur)
+        effect.setOffset(0, y_offset)
+        effect.setColor(QColor(15, 23, 42, alpha))
+        btn.setGraphicsEffect(effect)
+        btn.setCursor(Qt.CursorShape.PointingHandCursor)
+
+    @staticmethod
+    def frost_field(field: QWidget, blur: int = 22, y_offset: int = 3, alpha: int = 38):
+        effect = QGraphicsDropShadowEffect(field)
+        effect.setBlurRadius(blur)
+        effect.setOffset(0, y_offset)
+        effect.setColor(QColor(15, 23, 42, alpha))
+        field.setGraphicsEffect(effect)
 
 # ======================= 小组件 =======================
 class AnimatedBar(QWidget):
@@ -240,9 +356,13 @@ class TitleBar(QWidget):
         self.setMaximumHeight(42)
         self.drag = None
         self.lab = QLabel(title); self.lab.setObjectName("Sub")
-        self.btn_min = QPushButton("—"); self.btn_min.setObjectName("Secondary"); self.btn_min.setFixedWidth(44)
-        self.btn_x   = QPushButton("×"); self.btn_x.setObjectName("Secondary"); self.btn_x.setFixedWidth(44)
-        row = QHBoxLayout(self); row.setContentsMargins(6,6,6,0); row.setSpacing(8)
+        self.btn_min = QPushButton(""); self.btn_min.setObjectName("MacMin"); self.btn_min.setFixedSize(18, 18)
+        self.btn_x   = QPushButton(""); self.btn_x.setObjectName("MacClose"); self.btn_x.setFixedSize(18, 18)
+        for btn, tip in ((self.btn_min, "最小化"), (self.btn_x, "关闭")):
+            btn.setToolTip(tip)
+            btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        row = QHBoxLayout(self); row.setContentsMargins(12,10,12,0); row.setSpacing(10)
         row.addWidget(self.lab); row.addStretch(1); row.addWidget(self.btn_min); row.addWidget(self.btn_x)
         self.btn_min.clicked.connect(parent.showMinimized); self.btn_x.clicked.connect(parent.close)
     def mousePressEvent(self, e):
@@ -307,8 +427,10 @@ class ActivateDialog(QDialog):
         lab_mc = QLabel("机器码"); lab_mc.setObjectName("Sub")
         self.ed_mc = QLineEdit(); self.ed_mc.setReadOnly(True); self.ed_mc.setText(self.mc); self.ed_mc.setCursorPosition(0)
         self.ed_mc.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        Theme.frost_field(self.ed_mc, blur=26, y_offset=2, alpha=36)
         self.btn_copy = QPushButton("复制"); self.btn_copy.setObjectName("Secondary"); self.btn_copy.setFixedWidth(68)
         self.btn_copy.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed); self.btn_copy.clicked.connect(self.copy_mc)
+        Theme.elevate_button(self.btn_copy, blur=18, y_offset=4, alpha=55)
         hint = QLabel("请将上述机器码发送给管理员以获取激活码。"); hint.setObjectName("Hint"); hint.setWordWrap(True)
 
         form.addWidget(lab_mc,    0, 0, 1, 1)
@@ -323,10 +445,12 @@ class ActivateDialog(QDialog):
         self.ed_code.textChanged.connect(self.on_code_change)
         self.ed_code.returnPressed.connect(self.on_accept)
         self.ed_code.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        Theme.frost_field(self.ed_code, blur=26, y_offset=2, alpha=40)
 
         # 右侧粘贴按钮（外部）
         self.btn_paste = QPushButton("粘贴"); self.btn_paste.setObjectName("Secondary"); self.btn_paste.setFixedWidth(68)
         self.btn_paste.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed); self.btn_paste.clicked.connect(self.paste_code)
+        Theme.elevate_button(self.btn_paste, blur=18, y_offset=4, alpha=55)
 
         # 内嵌“眼睛”动作（TrailingPosition）
         self.eye_action = QAction(self)
@@ -348,7 +472,9 @@ class ActivateDialog(QDialog):
         # 操作区
         actions = QHBoxLayout(); actions.setSpacing(8); actions.addStretch(1)
         self.btn_cancel = QPushButton("取消"); self.btn_cancel.setObjectName("Secondary"); self.btn_cancel.clicked.connect(self.reject)
+        Theme.elevate_button(self.btn_cancel, blur=22, y_offset=5, alpha=60)
         self.btn_ok = QPushButton("确认登录"); self.btn_ok.setObjectName("Primary"); self.btn_ok.clicked.connect(self.on_accept)
+        Theme.elevate_button(self.btn_ok, blur=26, y_offset=6, alpha=72)
         self.btn_ok.setEnabled(False); actions.addWidget(self.btn_cancel); actions.addWidget(self.btn_ok)
         card.addLayout(actions)
 
