@@ -26,7 +26,7 @@ from PyQt6.QtGui import (
 )
 from PyQt6.QtWidgets import (
     QApplication, QDialog, QLabel, QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout,
-    QWidget, QFrame, QGridLayout, QSizePolicy
+    QWidget, QFrame, QGridLayout, QSizePolicy, QGraphicsDropShadowEffect
 )
 
 # ======================= 基本信息 =======================
@@ -181,10 +181,10 @@ class Theme:
         app.setStyleSheet(f"""
         QWidget{{ color:{Theme.TXT.name()}; font-size:12pt; background: transparent; }}
         .Card{{
-            background: rgba(255,255,255,0.92);
-            border: 1px solid rgba(140,150,175,0.18);
-            border-radius: 14px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);  /* 手动添加阴影 */
+            background: rgba(255,255,255,0.88);
+            border: 1px solid rgba(140,150,175,0.20);
+            border-radius: 16px;
+            box-shadow: 0 12px 34px rgba(15,23,42,0.10);
         }}
         QLabel#H1{{ font-size:17pt; font-weight:800; letter-spacing:.2px; }}
         QLabel#Sub{{ color:{Theme.MUT.name()}; }}
@@ -297,9 +297,13 @@ class TitleBar(QWidget):
         self.setMaximumHeight(42)
         self.drag = None
         self.lab = QLabel(title); self.lab.setObjectName("Sub")
-        self.btn_min = QPushButton("—"); self.btn_min.setObjectName("Secondary"); self.btn_min.setFixedWidth(44)
-        self.btn_x   = QPushButton("×"); self.btn_x.setObjectName("Secondary"); self.btn_x.setFixedWidth(44)
-        row = QHBoxLayout(self); row.setContentsMargins(6,6,6,0); row.setSpacing(8)
+        self.btn_min = QPushButton(""); self.btn_min.setObjectName("MacMin"); self.btn_min.setFixedSize(18, 18)
+        self.btn_x   = QPushButton(""); self.btn_x.setObjectName("MacClose"); self.btn_x.setFixedSize(18, 18)
+        for btn, tip in ((self.btn_min, "最小化"), (self.btn_x, "关闭")):
+            btn.setToolTip(tip)
+            btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        row = QHBoxLayout(self); row.setContentsMargins(12,10,12,0); row.setSpacing(10)
         row.addWidget(self.lab); row.addStretch(1); row.addWidget(self.btn_min); row.addWidget(self.btn_x)
         self.btn_min.clicked.connect(parent.showMinimized); self.btn_x.clicked.connect(parent.close)
     def mousePressEvent(self, e):
@@ -366,6 +370,7 @@ class ActivateDialog(QDialog):
         self.ed_mc.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.btn_copy = QPushButton("复制"); self.btn_copy.setObjectName("Secondary"); self.btn_copy.setFixedWidth(68)
         self.btn_copy.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed); self.btn_copy.clicked.connect(self.copy_mc)
+        Theme.elevate_button(self.btn_copy, blur=18, y_offset=4, alpha=55)
         hint = QLabel("请将上述机器码发送给管理员以获取激活码。"); hint.setObjectName("Hint"); hint.setWordWrap(True)
 
         form.addWidget(lab_mc,    0, 0, 1, 1)
@@ -384,6 +389,7 @@ class ActivateDialog(QDialog):
         # 右侧粘贴按钮（外部）
         self.btn_paste = QPushButton("粘贴"); self.btn_paste.setObjectName("Secondary"); self.btn_paste.setFixedWidth(68)
         self.btn_paste.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed); self.btn_paste.clicked.connect(self.paste_code)
+        Theme.elevate_button(self.btn_paste, blur=18, y_offset=4, alpha=55)
 
         # 内嵌“眼睛”动作（TrailingPosition）
         self.eye_action = QAction(self)
@@ -405,7 +411,9 @@ class ActivateDialog(QDialog):
         # 操作区
         actions = QHBoxLayout(); actions.setSpacing(8); actions.addStretch(1)
         self.btn_cancel = QPushButton("取消"); self.btn_cancel.setObjectName("Secondary"); self.btn_cancel.clicked.connect(self.reject)
+        Theme.elevate_button(self.btn_cancel, blur=22, y_offset=5, alpha=60)
         self.btn_ok = QPushButton("确认登录"); self.btn_ok.setObjectName("Primary"); self.btn_ok.clicked.connect(self.on_accept)
+        Theme.elevate_button(self.btn_ok, blur=26, y_offset=6, alpha=72)
         self.btn_ok.setEnabled(False); actions.addWidget(self.btn_cancel); actions.addWidget(self.btn_ok)
         card.addLayout(actions)
 
