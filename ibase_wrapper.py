@@ -559,8 +559,8 @@ class TitleButton(QPushButton):
     def paintEvent(self, e):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        rect = self.rect().adjusted(3, 3, -3, -3)
-        radius = rect.height() / 2
+        rect = QRectF(self.rect()).adjusted(3.0, 3.0, -3.0, -3.0)
+        radius = rect.height() / 2.0
         base = self._base_color()
         top = QColor(base)
         bottom = QColor(base)
