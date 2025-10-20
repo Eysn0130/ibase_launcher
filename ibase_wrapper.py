@@ -24,12 +24,13 @@ from PyQt6.QtCore import (
 )
 from PyQt6.QtGui import (
     QFont, QFontDatabase, QPalette, QColor, QClipboard,
-    QPainter, QPainterPath, QLinearGradient, QRegion, QIcon, QPixmap, QPen
+    QPainter, QPainterPath, QLinearGradient, QRegion, QIcon, QPixmap, QPen,
+    QRadialGradient
 )
 from PyQt6.QtWidgets import (
     QApplication, QDialog, QLabel, QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout,
     QWidget, QFrame, QGridLayout, QSizePolicy, QGraphicsDropShadowEffect, QToolButton,
-    QGraphicsOpacityEffect
+    QGraphicsOpacityEffect, QMessageBox
 )
 
 # ======================= 基本信息 =======================
@@ -516,7 +517,7 @@ class TitleButton(QPushButton):
         self.kind = kind
         self._hover = False
         self._pressed = False
-        self.setFixedSize(26, 26)
+        self.setFixedSize(28, 28)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
@@ -553,50 +554,52 @@ class TitleButton(QPushButton):
         pen = QPen(QColor(255, 255, 255, 235))
         pen.setCapStyle(Qt.PenCapStyle.RoundCap)
         pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
-        pen.setWidthF(1.9)
+        pen.setWidthF(2.2)
         return pen
 
     def paintEvent(self, e):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        rect = QRectF(self.rect())
-        rect.adjust(3.0, 3.0, -3.0, -3.0)
-        radius = rect.height() / 2.0
-        base = self._base_color()
-        top = QColor(base)
-        bottom = QColor(base)
-        if self._pressed:
-            top = top.darker(125)
-            bottom = bottom.darker(135)
-        elif self._hover:
-            top = top.lighter(120)
-            bottom = bottom.lighter(105)
-        else:
-            top = top.lighter(112)
-            bottom = bottom.darker(112)
-        gradient = QLinearGradient(QPointF(rect.topLeft()), QPointF(rect.bottomRight()))
-        gradient.setColorAt(0.0, top)
-        gradient.setColorAt(1.0, bottom)
-        painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(gradient)
-        painter.drawRoundedRect(rect, radius, radius)
+        outer = QRectF(self.rect()).adjusted(3.0, 3.0, -3.0, -3.0)
+        diameter = min(outer.width(), outer.height())
+        circle = QRectF(0.0, 0.0, diameter, diameter)
+        circle.moveCenter(outer.center())
 
-        border = QColor(bottom)
-        border.setAlpha(200)
-        painter.setPen(QPen(border.darker(115), 1.2))
+        base = self._base_color()
+        highlight = QColor(base)
+        shadow = QColor(base)
+        if self._pressed:
+            highlight = highlight.darker(130)
+            shadow = shadow.darker(160)
+        elif self._hover:
+            highlight = highlight.lighter(145)
+            shadow = shadow.darker(130)
+        else:
+            highlight = highlight.lighter(130)
+            shadow = shadow.darker(140)
+
+        grad = QRadialGradient(circle.center(), diameter / 2.0)
+        grad.setColorAt(0.0, highlight)
+        grad.setColorAt(0.65, base)
+        grad.setColorAt(1.0, shadow)
+
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(grad)
+        painter.drawEllipse(circle)
+
+        rim = QColor(shadow)
+        rim.setAlpha(210)
+        painter.setPen(QPen(rim, 1.1))
         painter.setBrush(Qt.BrushStyle.NoBrush)
-        border_rect = QRectF(rect)
-        border_rect.adjust(0.6, 0.6, -0.6, -0.6)
-        border_radius = max(radius - 0.6, 0.0)
-        painter.drawRoundedRect(border_rect, border_radius, border_radius)
+        painter.drawEllipse(circle.adjusted(0.3, 0.3, -0.3, -0.3))
 
         painter.setPen(self._icon_pen())
         if self.kind == "min":
-            y = rect.center().y()
-            painter.drawLine(QPointF(rect.left() + 6.0, y), QPointF(rect.right() - 6.0, y))
+            y = circle.center().y()
+            painter.drawLine(QPointF(circle.left() + 6.5, y), QPointF(circle.right() - 6.5, y))
         else:
-            painter.drawLine(QPointF(rect.left() + 6.0, rect.top() + 6.0), QPointF(rect.right() - 6.0, rect.bottom() - 6.0))
-            painter.drawLine(QPointF(rect.left() + 6.0, rect.bottom() - 6.0), QPointF(rect.right() - 6.0, rect.top() + 6.0))
+            painter.drawLine(QPointF(circle.left() + 6.5, circle.top() + 6.5), QPointF(circle.right() - 6.5, circle.bottom() - 6.5))
+            painter.drawLine(QPointF(circle.left() + 6.5, circle.bottom() - 6.5), QPointF(circle.right() - 6.5, circle.top() + 6.5))
 
 
 class TitleBar(QWidget):
@@ -617,13 +620,6 @@ class TitleBar(QWidget):
         self.btn_min.clicked.connect(parent.showMinimized); self.btn_x.clicked.connect(parent.close)
     def paintEvent(self, e):
         super().paintEvent(e)
-        p = QPainter(self)
-        p.setRenderHint(QPainter.RenderHint.Antialiasing, False)
-        pen = QPen(QColor(185, 195, 215, 140))
-        pen.setWidthF(1.0)
-        p.setPen(pen)
-        y = self.height() - 1
-        p.drawLine(0, y, self.width(), y)
     def mousePressEvent(self, e):
         if e.button() == Qt.MouseButton.LeftButton:
             self.drag = e.globalPosition().toPoint() - self.window().frameGeometry().topLeft(); e.accept()
@@ -817,6 +813,7 @@ class ActivateDialog(QDialog):
         self.setMinimumSize(520, 320); self.adjustSize()
         self.update_mask()
         self.copy_popup = CenterPopup(self)
+        self._error_popup = None
 
         # 入场轻浮动
         container.move(container.x(), container.y() + 8)
@@ -865,6 +862,22 @@ class ActivateDialog(QDialog):
         self.banner.hide()
         self.copy_popup.show_message("机器码已复制", duration=3000)
 
+    def _show_error_popup(self, text: str):
+        if self._error_popup is not None:
+            self._error_popup.close()
+            self._error_popup = None
+        msg = QMessageBox(self)
+        msg.setIcon(QMessageBox.Icon.Warning)
+        msg.setWindowTitle("激活失败")
+        msg.setText(text)
+        msg.setStandardButtons(QMessageBox.StandardButton.NoButton)
+        msg.setWindowModality(Qt.WindowModality.WindowModal)
+        msg.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
+        msg.show()
+        QTimer.singleShot(4000, msg.close)
+        msg.destroyed.connect(lambda: setattr(self, "_error_popup", None))
+        self._error_popup = msg
+
     def paste_code(self):
         self.ed_code.setText(QApplication.clipboard().text(QClipboard.Mode.Clipboard))
 
@@ -880,8 +893,8 @@ class ActivateDialog(QDialog):
             return
         expect = calc_activation_code(self.mc)
         if code != expect:
-            # 仅横幅，不再弹 Toast
             self.banner.show_msg("激活码不正确，请核对后再试。", ok=False)
+            self._show_error_popup("激活码不正确，请核对后再试。")
             self._shake(self)
             return
         self.banner.show_msg("激活成功 ✓", ok=True)
