@@ -18,15 +18,16 @@ import subprocess
 from pathlib import Path
 
 from PyQt6.QtCore import (
-    Qt, QTimer, QPoint, QRectF, QPropertyAnimation, QEasingCurve, QProcess
+    Qt, QTimer, QPoint, QRectF, QPropertyAnimation, QEasingCurve, QProcess,
+    QSize, QEvent, pyqtSignal
 )
 from PyQt6.QtGui import (
     QFont, QFontDatabase, QPalette, QColor, QClipboard,
-    QPainter, QPainterPath, QLinearGradient, QRegion, QAction, QIcon, QPixmap
+    QPainter, QPainterPath, QLinearGradient, QRegion, QIcon, QPixmap
 )
 from PyQt6.QtWidgets import (
     QApplication, QDialog, QLabel, QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout,
-    QWidget, QFrame, QGridLayout, QSizePolicy, QGraphicsDropShadowEffect
+    QWidget, QFrame, QGridLayout, QSizePolicy, QGraphicsDropShadowEffect, QToolButton
 )
 
 # ======================= 基本信息 =======================
@@ -181,33 +182,45 @@ class Theme:
         app.setStyleSheet(f"""
         QWidget{{ color:{Theme.TXT.name()}; font-size:12pt; background: transparent; }}
         .Card{{
-            background: rgba(255,255,255,0.84);
-            border: 1px solid rgba(120,135,170,0.22);
+            background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
+                stop:0 rgba(255,255,255,0.88),
+                stop:1 rgba(234,242,255,0.72)
+            );
+            border: 1px solid rgba(120,135,170,0.28);
             border-radius: 18px;
-            box-shadow: 0 14px 36px rgba(15,23,42,0.12);
+            box-shadow: 0 18px 40px rgba(15,23,42,0.16);
         }}
         QLabel#H1{{ font-size:17pt; font-weight:800; letter-spacing:.2px; }}
         QLabel#Sub{{ color:{Theme.MUT.name()}; }}
         QLabel#Hint{{ color:{Theme.MUT.name()}; font-size:11pt; }}
         QLabel#Banner{{ padding:8px 12px; border-radius:10px; font-weight:700; }}
         QLineEdit{{
-            background: rgba(255,255,255,0.70);
-            border: 1px solid rgba(135,150,185,0.38);
+            background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
+                stop:0 rgba(255,255,255,0.86),
+                stop:1 rgba(236,242,255,0.62)
+            );
+            border: 1px solid rgba(135,150,185,0.46);
             border-radius:14px;
-            padding:8px 14px;
+            padding:8px 42px 8px 16px;
             min-height:36px;
             font-size:13pt;
             color: rgba(6,8,16,0.94);
-            selection-background-color: rgba(120,170,255,0.40);
+            selection-background-color: rgba(120,170,255,0.42);
             selection-color: rgba(6,8,16,0.98);
         }}
         QLineEdit:hover{{
-            background: rgba(255,255,255,0.76);
-            border:1px solid rgba(120,170,255,0.60);
+            background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
+                stop:0 rgba(255,255,255,0.92),
+                stop:1 rgba(228,238,255,0.70)
+            );
+            border:1px solid rgba(120,176,255,0.80);
         }}
         QLineEdit:focus{{
-            border:1px solid rgba(120,170,255,0.92);
-            background: rgba(255,255,255,0.82);
+            border:1px solid rgba(112,176,255,0.96);
+            background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
+                stop:0 rgba(255,255,255,0.98),
+                stop:1 rgba(220,236,255,0.84)
+            );
         }}
         QLineEdit::placeholder{{ color: rgba(12,12,16,0.48); }}
         QLineEdit[readOnly="true"]{{
@@ -215,35 +228,35 @@ class Theme:
             font-family:Consolas,'Cascadia Mono','JetBrains Mono',monospace;
             letter-spacing:.6px;
             font-size:13pt;
-            background: rgba(240,248,255,0.42);
+            background: rgba(240,248,255,0.46);
         }}
         QPushButton{{
             min-height:38px;
-            padding:0 24px;
+            padding:0 26px;
             border-radius:20px;
             font-weight:700;
-            letter-spacing:.28px;
+            letter-spacing:.32px;
             color:rgba(28,28,30,0.90);
             background: qlineargradient(x1:0,y1:0,x2:0,y2:1,
-                stop:0 rgba(255,255,255,0.74),
-                stop:1 rgba(255,255,255,0.28)
+                stop:0 rgba(255,255,255,0.88),
+                stop:1 rgba(234,240,254,0.48)
             );
-            border:1px solid rgba(255,255,255,0.62);
+            border:1px solid rgba(190,202,230,0.62);
         }}
         QPushButton:hover{{
             color:rgba(0,0,0,0.94);
-            border:1px solid rgba(255,255,255,0.86);
+            border:1px solid rgba(210,220,245,0.82);
             background: qlineargradient(x1:0,y1:0,x2:0,y2:1,
-                stop:0 rgba(255,255,255,0.86),
-                stop:1 rgba(255,255,255,0.44)
+                stop:0 rgba(255,255,255,0.94),
+                stop:1 rgba(226,236,255,0.62)
             );
         }}
         QPushButton:pressed{{
             color:rgba(0,0,0,0.80);
-            border:1px solid rgba(210,220,235,0.78);
+            border:1px solid rgba(190,198,220,0.82);
             background: qlineargradient(x1:0,y1:0,x2:0,y2:1,
-                stop:0 rgba(236,238,244,0.76),
-                stop:1 rgba(218,222,234,0.40)
+                stop:0 rgba(234,236,244,0.70),
+                stop:1 rgba(214,220,236,0.46)
             );
         }}
         QPushButton:disabled{{
@@ -252,23 +265,26 @@ class Theme:
             border:1px solid rgba(255,255,255,0.24);
         }}
         QPushButton#Primary{{
-            color:rgba(255,255,255,0.97);
-            border:1px solid rgba(255,255,255,0.88);
+            color:rgba(255,255,255,0.98);
+            border:1px solid rgba(255,255,255,0.92);
             background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
-                stop:0 rgba({Theme.A1.red()},{Theme.A1.green()},{Theme.A1.blue()},0.76),
-                stop:1 rgba({Theme.A2.red()},{Theme.A2.green()},{Theme.A2.blue()},0.78)
+                stop:0 rgba({Theme.A1.red()},{Theme.A1.green()},{Theme.A1.blue()},0.96),
+                stop:0.5 rgba({Theme.A2.red()},{Theme.A2.green()},{Theme.A2.blue()},0.94),
+                stop:1 rgba({Theme.A3.red()},{Theme.A3.green()},{Theme.A3.blue()},0.88)
             );
         }}
         QPushButton#Primary:hover{{
             background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
-                stop:0 rgba({Theme.A1.red()},{Theme.A1.green()},{Theme.A1.blue()},0.90),
-                stop:1 rgba({Theme.A2.red()},{Theme.A2.green()},{Theme.A2.blue()},0.92)
+                stop:0 rgba({Theme.A1.red()},{Theme.A1.green()},{Theme.A1.blue()},1.00),
+                stop:0.5 rgba({Theme.A2.red()},{Theme.A2.green()},{Theme.A2.blue()},0.98),
+                stop:1 rgba({Theme.A3.red()},{Theme.A3.green()},{Theme.A3.blue()},0.96)
             );
         }}
         QPushButton#Primary:pressed{{
             background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
-                stop:0 rgba({Theme.A1.red()},{Theme.A1.green()},{Theme.A1.blue()},0.66),
-                stop:1 rgba({Theme.A2.red()},{Theme.A2.green()},{Theme.A2.blue()},0.68)
+                stop:0 rgba({Theme.A1.red()},{Theme.A1.green()},{Theme.A1.blue()},0.76),
+                stop:0.5 rgba({Theme.A2.red()},{Theme.A2.green()},{Theme.A2.blue()},0.74),
+                stop:1 rgba({Theme.A3.red()},{Theme.A3.green()},{Theme.A3.blue()},0.70)
             );
         }}
         QPushButton#Primary:disabled{{
@@ -280,17 +296,26 @@ class Theme:
             );
         }}
         QPushButton#Secondary{{
-            color:rgba(20,22,32,0.90);
-            background: rgba(255,255,255,0.36);
-            border:1px solid rgba(255,255,255,0.64);
+            color:rgba(20,22,32,0.92);
+            background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
+                stop:0 rgba(255,255,255,0.58),
+                stop:1 rgba(226,232,245,0.40)
+            );
+            border:1px solid rgba(220,228,245,0.72);
         }}
         QPushButton#Secondary:hover{{
-            color:rgba(0,0,0,0.94);
-            background: rgba(255,255,255,0.46);
+            color:rgba(0,0,0,0.96);
+            background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
+                stop:0 rgba(255,255,255,0.68),
+                stop:1 rgba(220,230,248,0.52)
+            );
         }}
         QPushButton#Secondary:pressed{{
             color:rgba(0,0,0,0.78);
-            background: rgba(255,255,255,0.30);
+            background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
+                stop:0 rgba(238,242,250,0.44),
+                stop:1 rgba(216,224,240,0.32)
+            );
         }}
         QPushButton#MacMin, QPushButton#MacClose{{
             min-height:0px;
@@ -319,7 +344,7 @@ class Theme:
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
 
     @staticmethod
-    def frost_field(field: QWidget, blur: int = 22, y_offset: int = 3, alpha: int = 38):
+    def frost_field(field: QWidget, blur: int = 24, y_offset: int = 3, alpha: int = 48):
         effect = QGraphicsDropShadowEffect(field)
         effect.setBlurRadius(blur)
         effect.setOffset(0, y_offset)
@@ -327,6 +352,147 @@ class Theme:
         field.setGraphicsEffect(effect)
 
 # ======================= 小组件 =======================
+def make_eye_icon(open_eye: bool, accent: QColor, size: int = 18) -> QIcon:
+    pm = QPixmap(size, size)
+    pm.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pm)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+    rim = QColor(accent)
+    rim.setAlpha(235)
+    glow = QColor(accent)
+    glow.setAlpha(90)
+
+    rect = QRectF(1.2, size * 0.32, size - 2.4, size * 0.36)
+    path = QPainterPath()
+    path.addEllipse(rect)
+
+    painter.setPen(Qt.PenStyle.NoPen)
+    painter.setBrush(glow)
+    painter.drawEllipse(QRectF(rect).adjusted(-1.2, -1.8, 1.2, 1.8))
+
+    painter.setPen(QColor(rim))
+    painter.setBrush(Qt.BrushStyle.NoBrush)
+    painter.drawPath(path)
+
+    if open_eye:
+        pupil = QColor(rim)
+        pupil.setAlpha(245)
+        radius = size * 0.22
+        center = QPoint(int(size / 2), int(size * 0.50))
+        painter.setBrush(pupil)
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.drawEllipse(center, int(radius * 0.38), int(radius * 0.38))
+    else:
+        painter.setPen(QColor(rim))
+        painter.drawLine(
+            int(size * 0.22), int(size * 0.70),
+            int(size * 0.78), int(size * 0.30)
+        )
+
+    painter.end()
+    return QIcon(pm)
+
+
+class EyeToggleButton(QToolButton):
+    def __init__(self, parent=None, size: int = 18):
+        super().__init__(parent)
+        self._base_icon_size = QSize(size, size)
+        self._hover = False
+        self.setCheckable(True)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setAutoRaise(True)
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.setIconSize(self._base_icon_size)
+        self.setFixedSize(size + 18, size + 12)
+        self.setStyleSheet("QToolButton{border:none;background:transparent;padding:0;}")
+
+        self._bounce = QPropertyAnimation(self, b"iconSize", self)
+        self._bounce.setDuration(180)
+        self._bounce.setEasingCurve(QEasingCurve.Type.OutBack)
+
+        self.toggled.connect(self._on_toggled)
+        self._refresh_icon()
+
+    def enterEvent(self, e: QEvent):
+        self._hover = True
+        self._refresh_icon()
+        super().enterEvent(e)
+
+    def leaveEvent(self, e: QEvent):
+        self._hover = False
+        self._refresh_icon()
+        super().leaveEvent(e)
+
+    def _accent_color(self) -> QColor:
+        if self.isChecked():
+            base = Theme.A3
+        else:
+            base = Theme.A1
+        color = QColor(base)
+        if self._hover:
+            color = color.lighter(115)
+        return color
+
+    def _refresh_icon(self):
+        accent = self._accent_color()
+        icon = make_eye_icon(not self.isChecked(), accent)
+        self.setIcon(icon)
+        self.setToolTip("显示" if self.isChecked() else "隐藏")
+
+    def _on_toggled(self, _state: bool):
+        self._refresh_icon()
+        self._play_bounce()
+
+    def _play_bounce(self):
+        if self._bounce.state() == QPropertyAnimation.State.Running:
+            self._bounce.stop()
+        enlarged = QSize(self._base_icon_size.width() + 4, self._base_icon_size.height() + 4)
+        self._bounce.setStartValue(self._base_icon_size)
+        self._bounce.setKeyValueAt(0.5, enlarged)
+        self._bounce.setEndValue(self._base_icon_size)
+        self._bounce.start()
+
+
+class PasswordLineEdit(QLineEdit):
+    toggled = pyqtSignal(bool)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._eye = EyeToggleButton(self)
+        self._eye.toggled.connect(self._on_toggle)
+        self._update_margins()
+        self.setEchoMode(QLineEdit.EchoMode.Normal)
+
+    def _update_margins(self):
+        margin = self._eye.width() + 6
+        self.setTextMargins(14, 0, margin, 0)
+        self._position_eye()
+
+    def resizeEvent(self, e):
+        super().resizeEvent(e)
+        self._position_eye()
+
+    def _position_eye(self):
+        size = self._eye.size()
+        x = self.width() - size.width() - 6
+        y = (self.height() - size.height()) // 2
+        self._eye.move(x, max(0, y))
+
+    def _on_toggle(self, hidden: bool):
+        self.setEchoMode(QLineEdit.EchoMode.Password if hidden else QLineEdit.EchoMode.Normal)
+        self.toggled.emit(hidden)
+
+    def showEvent(self, e):
+        super().showEvent(e)
+        self._position_eye()
+
+    def set_hidden(self, hidden: bool):
+        if self._eye.isChecked() == hidden:
+            self._on_toggle(hidden)
+        else:
+            self._eye.setChecked(hidden)
+
 class AnimatedBar(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -355,6 +521,7 @@ class TitleBar(QWidget):
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.setMaximumHeight(42)
         self.drag = None
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.lab = QLabel(title); self.lab.setObjectName("Sub")
         self.btn_min = QPushButton(""); self.btn_min.setObjectName("MacMin"); self.btn_min.setFixedSize(18, 18)
         self.btn_x   = QPushButton(""); self.btn_x.setObjectName("MacClose"); self.btn_x.setFixedSize(18, 18)
@@ -362,9 +529,19 @@ class TitleBar(QWidget):
             btn.setToolTip(tip)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
             btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        row = QHBoxLayout(self); row.setContentsMargins(12,10,12,0); row.setSpacing(10)
+        row = QHBoxLayout(self); row.setContentsMargins(14,8,14,4); row.setSpacing(10)
         row.addWidget(self.lab); row.addStretch(1); row.addWidget(self.btn_min); row.addWidget(self.btn_x)
         self.btn_min.clicked.connect(parent.showMinimized); self.btn_x.clicked.connect(parent.close)
+    def paintEvent(self, e):
+        super().paintEvent(e)
+        p = QPainter(self)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        grad = QLinearGradient(0, 0, 0, self.height())
+        grad.setColorAt(0.0, QColor(255, 255, 255, 210))
+        grad.setColorAt(1.0, QColor(232, 238, 252, 170))
+        p.fillRect(self.rect(), grad)
+        p.setPen(QColor(190, 200, 220, 140))
+        p.drawLine(self.rect().bottomLeft(), self.rect().bottomRight())
     def mousePressEvent(self, e):
         if e.button() == Qt.MouseButton.LeftButton:
             self.drag = e.globalPosition().toPoint() - self.window().frameGeometry().topLeft(); e.accept()
@@ -408,7 +585,7 @@ class ActivateDialog(QDialog):
         outer.addWidget(container)
 
         # 卡片内部留白
-        card = QVBoxLayout(container); card.setContentsMargins(22, 18, 22, 18); card.setSpacing(12)
+        card = QVBoxLayout(container); card.setContentsMargins(22, 16, 22, 18); card.setSpacing(10)
 
         # 标题栏 / 光带 / 横幅
         self.titlebar = TitleBar(self, "iBase 激活"); card.addWidget(self.titlebar)
@@ -421,16 +598,16 @@ class ActivateDialog(QDialog):
         card.addWidget(h1); card.addWidget(sub)
 
         # 表单
-        form = QGridLayout(); form.setHorizontalSpacing(12); form.setVerticalSpacing(8); card.addLayout(form)
+        form = QGridLayout(); form.setHorizontalSpacing(10); form.setVerticalSpacing(6); card.addLayout(form)
 
         # —— 机器码 —— #
         lab_mc = QLabel("机器码"); lab_mc.setObjectName("Sub")
         self.ed_mc = QLineEdit(); self.ed_mc.setReadOnly(True); self.ed_mc.setText(self.mc); self.ed_mc.setCursorPosition(0)
         self.ed_mc.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        Theme.frost_field(self.ed_mc, blur=26, y_offset=2, alpha=36)
+        Theme.frost_field(self.ed_mc, blur=30, y_offset=2, alpha=56)
         self.btn_copy = QPushButton("复制"); self.btn_copy.setObjectName("Secondary"); self.btn_copy.setFixedWidth(68)
         self.btn_copy.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed); self.btn_copy.clicked.connect(self.copy_mc)
-        Theme.elevate_button(self.btn_copy, blur=18, y_offset=4, alpha=55)
+        Theme.elevate_button(self.btn_copy, blur=20, y_offset=4, alpha=68)
         hint = QLabel("请将上述机器码发送给管理员以获取激活码。"); hint.setObjectName("Hint"); hint.setWordWrap(True)
 
         form.addWidget(lab_mc,    0, 0, 1, 1)
@@ -440,41 +617,31 @@ class ActivateDialog(QDialog):
 
         # —— 激活码（右侧内嵌眼睛） —— #
         lab_cd = QLabel("激活码"); lab_cd.setObjectName("Sub")
-        self.ed_code = QLineEdit(); self.ed_code.setPlaceholderText("请输入激活码")
-        self.ed_code.setEchoMode(QLineEdit.EchoMode.Normal)
+        self.ed_code = PasswordLineEdit(); self.ed_code.setPlaceholderText("请输入激活码")
         self.ed_code.textChanged.connect(self.on_code_change)
         self.ed_code.returnPressed.connect(self.on_accept)
         self.ed_code.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        Theme.frost_field(self.ed_code, blur=26, y_offset=2, alpha=40)
+        self.ed_code.set_hidden(True)
+        Theme.frost_field(self.ed_code, blur=30, y_offset=2, alpha=64)
 
         # 右侧粘贴按钮（外部）
         self.btn_paste = QPushButton("粘贴"); self.btn_paste.setObjectName("Secondary"); self.btn_paste.setFixedWidth(68)
         self.btn_paste.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed); self.btn_paste.clicked.connect(self.paste_code)
-        Theme.elevate_button(self.btn_paste, blur=18, y_offset=4, alpha=55)
-
-        # 内嵌“眼睛”动作（TrailingPosition）
-        self.eye_action = QAction(self)
-        self.eye_action.setCheckable(True)
-        self.eye_action.toggled.connect(self.toggle_echo)
-        # 初始化图标
-        self._eye_open_icon = self._make_eye_icon(open_eye=True)
-        self._eye_closed_icon = self._make_eye_icon(open_eye=False)
-        self._update_eye_icon(False)
-        self.ed_code.addAction(self.eye_action, QLineEdit.ActionPosition.TrailingPosition)
+        Theme.elevate_button(self.btn_paste, blur=20, y_offset=4, alpha=68)
 
         form.addWidget(lab_cd,       2, 0, 1, 1)
         form.addWidget(self.ed_code, 2, 1, 1, 4)
         form.addWidget(self.btn_paste, 2, 5, 1, 1)
 
-        form.setColumnStretch(1, 5)
-        form.setColumnMinimumWidth(5, 76)
+        form.setColumnStretch(1, 6)
+        form.setColumnMinimumWidth(5, 72)
 
         # 操作区
-        actions = QHBoxLayout(); actions.setSpacing(8); actions.addStretch(1)
+        actions = QHBoxLayout(); actions.setSpacing(10); actions.addStretch(1)
         self.btn_cancel = QPushButton("取消"); self.btn_cancel.setObjectName("Secondary"); self.btn_cancel.clicked.connect(self.reject)
-        Theme.elevate_button(self.btn_cancel, blur=22, y_offset=5, alpha=60)
+        Theme.elevate_button(self.btn_cancel, blur=24, y_offset=5, alpha=70)
         self.btn_ok = QPushButton("确认登录"); self.btn_ok.setObjectName("Primary"); self.btn_ok.clicked.connect(self.on_accept)
-        Theme.elevate_button(self.btn_ok, blur=26, y_offset=6, alpha=72)
+        Theme.elevate_button(self.btn_ok, blur=32, y_offset=7, alpha=90)
         self.btn_ok.setEnabled(False); actions.addWidget(self.btn_cancel); actions.addWidget(self.btn_ok)
         card.addLayout(actions)
 
@@ -489,35 +656,6 @@ class ActivateDialog(QDialog):
         ani.setEndValue(QPoint(container.x(), container.y() - 8))
         ani.setEasingCurve(QEasingCurve.Type.OutCubic)
         ani.start(QPropertyAnimation.DeletionPolicy.DeleteWhenStopped)
-
-    # --- 眼睛图标绘制与更新 ---
-    def _make_eye_icon(self, open_eye: bool, size: int = 18) -> QIcon:
-        pm = QPixmap(size, size); pm.fill(Qt.GlobalColor.transparent)
-        p = QPainter(pm)
-        p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        # 眼眶
-        p.setPen(QColor(210, 220, 235))
-        p.setBrush(Qt.BrushStyle.NoBrush)
-        rect = QRectF(1.5, size*0.32, size-3.0, size*0.36)
-        path = QPainterPath()
-        path.addEllipse(rect)
-        p.drawPath(path)
-        # 瞳孔 / 闭眼线
-        if open_eye:
-            p.setBrush(QColor(210, 220, 235))
-            p.setPen(Qt.PenStyle.NoPen)
-            r = QRectF(size*0.45, size*0.45, size*0.10, size*0.10)
-            p.drawEllipse(r)
-        else:
-            p.setPen(QColor(210, 220, 235))
-            p.drawLine(int(size*0.22), int(size*0.70), int(size*0.78), int(size*0.30))
-        p.end()
-        return QIcon(pm)
-
-    def _update_eye_icon(self, hidden: bool):
-        # hidden=True 表示密码模式
-        self.eye_action.setIcon(self._eye_closed_icon if hidden else self._eye_open_icon)
-        self.eye_action.setToolTip("显示" if hidden else "隐藏")
 
     # ========= 圆角掩码 =========
     def update_mask(self):
@@ -560,10 +698,6 @@ class ActivateDialog(QDialog):
 
     def paste_code(self):
         self.ed_code.setText(QApplication.clipboard().text(QClipboard.Mode.Clipboard))
-
-    def toggle_echo(self, hide: bool):
-        self.ed_code.setEchoMode(QLineEdit.EchoMode.Password if hide else QLineEdit.EchoMode.Normal)
-        self._update_eye_icon(hide)
 
     def on_code_change(self, s: str):
         self.btn_ok.setEnabled(len((s or "").strip()) >= 4)
