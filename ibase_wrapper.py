@@ -559,8 +559,9 @@ class TitleButton(QPushButton):
     def paintEvent(self, e):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        rect = self.rect().adjusted(3, 3, -3, -3)
-        radius = rect.height() / 2
+        rect = QRectF(self.rect())
+        rect.adjust(3.0, 3.0, -3.0, -3.0)
+        radius = rect.height() / 2.0
         base = self._base_color()
         top = QColor(base)
         bottom = QColor(base)
@@ -584,7 +585,10 @@ class TitleButton(QPushButton):
         border.setAlpha(200)
         painter.setPen(QPen(border.darker(115), 1.2))
         painter.setBrush(Qt.BrushStyle.NoBrush)
-        painter.drawRoundedRect(rect.adjusted(0.6, 0.6, -0.6, -0.6), radius - 0.6, radius - 0.6)
+        border_rect = QRectF(rect)
+        border_rect.adjust(0.6, 0.6, -0.6, -0.6)
+        border_radius = max(radius - 0.6, 0.0)
+        painter.drawRoundedRect(border_rect, border_radius, border_radius)
 
         painter.setPen(self._icon_pen())
         if self.kind == "min":
