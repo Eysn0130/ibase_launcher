@@ -200,14 +200,63 @@ class Theme:
             color:#D6ECFF; font-family:Consolas,'Cascadia Mono','JetBrains Mono',monospace;
             letter-spacing:.5px; font-size:13pt;
         }}
-        QPushButton{{ min-height:32px; padding:0 14px; border-radius:10px; font-weight:700; letter-spacing:.2px; }}
-        QPushButton#Primary{{
-            border:none; color:white;
-            background: qlineargradient(x1:0,y1:0,x2:1,y2:1, stop:0 {Theme.A1.name()}, stop:.5 {Theme.A2.name()}, stop:1 {Theme.A3.name()});
+        QPushButton{{
+            min-height:32px;
+            padding:0 18px;
+            border-radius:12px;
+            font-weight:700;
+            letter-spacing:.2px;
+            color:#1c1c1e;
+            background: qlineargradient(x1:0,y1:0,x2:0,y2:1,
+                stop:0 rgba(255,255,255,0.68),
+                stop:1 rgba(255,255,255,0.32)
+            );
+            border:1px solid rgba(255,255,255,0.55);
         }}
-        QPushButton#Primary:disabled{{ background:rgba(140,150,175,0.38); color:rgba(255,255,255,0.75); }}
-        QPushButton#Secondary{{ background:rgba(46,50,62,0.92); border:1px solid rgba(140,150,175,0.30); }}
-        QPushButton#Secondary:hover{{ background:rgba(58,62,76,0.98); }}
+        QPushButton:hover{{
+            background: qlineargradient(x1:0,y1:0,x2:0,y2:1,
+                stop:0 rgba(255,255,255,0.78),
+                stop:1 rgba(255,255,255,0.42)
+            );
+        }}
+        QPushButton:pressed{{
+            background: qlineargradient(x1:0,y1:0,x2:0,y2:1,
+                stop:0 rgba(235,235,235,0.70),
+                stop:1 rgba(235,235,235,0.34)
+            );
+        }}
+        QPushButton:disabled{{
+            color:rgba(28,28,30,0.35);
+            background: rgba(255,255,255,0.18);
+            border:1px solid rgba(255,255,255,0.20);
+        }}
+        QPushButton#Primary{{
+            color:rgba(20,20,22,0.92);
+            border:1px solid rgba(255,255,255,0.75);
+            background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
+                stop:0 rgba({Theme.A1.red()},{Theme.A1.green()},{Theme.A1.blue()},0.60),
+                stop:1 rgba({Theme.A2.red()},{Theme.A2.green()},{Theme.A2.blue()},0.60)
+            );
+        }}
+        QPushButton#Primary:hover{{
+            background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
+                stop:0 rgba({Theme.A1.red()},{Theme.A1.green()},{Theme.A1.blue()},0.70),
+                stop:1 rgba({Theme.A2.red()},{Theme.A2.green()},{Theme.A2.blue()},0.70)
+            );
+        }}
+        QPushButton#Primary:pressed{{
+            background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
+                stop:0 rgba({Theme.A1.red()},{Theme.A1.green()},{Theme.A1.blue()},0.52),
+                stop:1 rgba({Theme.A2.red()},{Theme.A2.green()},{Theme.A2.blue()},0.52)
+            );
+        }}
+        QPushButton#Secondary{{
+            color:rgba(28,28,30,0.82);
+            background: rgba(255,255,255,0.24);
+            border:1px solid rgba(255,255,255,0.48);
+        }}
+        QPushButton#Secondary:hover{{ background: rgba(255,255,255,0.30); }}
+        QPushButton#Secondary:pressed{{ background: rgba(255,255,255,0.20); }}
         """)
 
 # ======================= 小组件 =======================
