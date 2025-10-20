@@ -593,10 +593,10 @@ class TitleButton(QPushButton):
         painter.setPen(self._icon_pen())
         if self.kind == "min":
             y = rect.center().y()
-            painter.drawLine(rect.left() + 6, y, rect.right() - 6, y)
+            painter.drawLine(QPointF(rect.left() + 6.0, y), QPointF(rect.right() - 6.0, y))
         else:
-            painter.drawLine(rect.left() + 6, rect.top() + 6, rect.right() - 6, rect.bottom() - 6)
-            painter.drawLine(rect.left() + 6, rect.bottom() - 6, rect.right() - 6, rect.top() + 6)
+            painter.drawLine(QPointF(rect.left() + 6.0, rect.top() + 6.0), QPointF(rect.right() - 6.0, rect.bottom() - 6.0))
+            painter.drawLine(QPointF(rect.left() + 6.0, rect.bottom() - 6.0), QPointF(rect.right() - 6.0, rect.top() + 6.0))
 
 
 class TitleBar(QWidget):
