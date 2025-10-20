@@ -3,7 +3,7 @@
 iBase.exe 启动包装器 · PyQt6（无黑边·高DPI·精致UI）
 - 外层外边距=0：卡片铺满窗口圆角
 - 圆角用 QRegion + Path（无黑边、兼容高DPI）
-- 顶部横幅提示（不再弹气泡 Toast：复制成功/激活失败仅横幅）
+- 顶部横幅提示（错误提示使用横幅，复制成功展示居中提示）
 - 激活码右侧“眼睛”图标内嵌在输入框中，点击切换明/密
 - 更优中文字体优先级与微调
 - 首次激活写入配置；后续直启 iBase.exe
@@ -16,6 +16,7 @@ import hashlib
 import platform
 import subprocess
 from pathlib import Path
+from typing import Optional
 
 from PyQt6.QtCore import (
     Qt, QTimer, QPoint, QRectF, QPropertyAnimation, QEasingCurve, QProcess,
@@ -23,11 +24,12 @@ from PyQt6.QtCore import (
 )
 from PyQt6.QtGui import (
     QFont, QFontDatabase, QPalette, QColor, QClipboard,
-    QPainter, QPainterPath, QLinearGradient, QRegion, QIcon, QPixmap
+    QPainter, QPainterPath, QLinearGradient, QRegion, QIcon, QPixmap, QPen
 )
 from PyQt6.QtWidgets import (
     QApplication, QDialog, QLabel, QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout,
-    QWidget, QFrame, QGridLayout, QSizePolicy, QGraphicsDropShadowEffect, QToolButton
+    QWidget, QFrame, QGridLayout, QSizePolicy, QGraphicsDropShadowEffect, QToolButton,
+    QGraphicsOpacityEffect
 )
 
 # ======================= 基本信息 =======================
@@ -317,21 +319,15 @@ class Theme:
                 stop:1 rgba(216,224,240,0.32)
             );
         }}
-        QPushButton#MacMin, QPushButton#MacClose{{
-            min-height:0px;
-            min-width:0px;
-            padding:0px;
-            margin:0px;
-            border-radius:8px;
-            border:1px solid rgba(255,255,255,0.45);
-            background: transparent;
+        QFrame#CenterPopup{{
+            background: rgba(20,24,33,0.84);
+            border-radius:18px;
         }}
-        QPushButton#MacMin{{ background: qradialgradient(cx:0.3,cy:0.3,radius:0.9,stop:0 #ffe29d, stop:1 #fbbc40); }}
-        QPushButton#MacClose{{ background: qradialgradient(cx:0.3,cy:0.3,radius:0.9,stop:0 #ff9a9e, stop:1 #ff5f57); }}
-        QPushButton#MacMin:hover{{ background: qradialgradient(cx:0.3,cy:0.3,radius:0.9,stop:0 #fff1c7, stop:1 #fdc55b); }}
-        QPushButton#MacClose:hover{{ background: qradialgradient(cx:0.3,cy:0.3,radius:0.9,stop:0 #ffc0c4, stop:1 #ff746b); }}
-        QPushButton#MacMin:pressed{{ background: qradialgradient(cx:0.3,cy:0.3,radius:0.9,stop:0 #ffe6a6, stop:1 #f0ab32); }}
-        QPushButton#MacClose:pressed{{ background: qradialgradient(cx:0.3,cy:0.3,radius:0.9,stop:0 #ffaaa9, stop:1 #f54e49); }}
+        QFrame#CenterPopup QLabel{{
+            color: rgba(255,255,255,0.98);
+            font-size:15px;
+            letter-spacing:0.6px;
+        }}
         """)
 
     @staticmethod
@@ -515,6 +511,91 @@ class AnimatedBar(QWidget):
         p.fillRect(self.rect(), g)
 
 # ======================= 激活对话框 =======================
+class TitleButton(QPushButton):
+    def __init__(self, kind: str, parent=None):
+        super().__init__(parent)
+        self.kind = kind
+        self._hover = False
+        self._pressed = False
+        self.setFixedSize(26, 26)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+
+    def enterEvent(self, e):
+        self._hover = True
+        self.update()
+        super().enterEvent(e)
+
+    def leaveEvent(self, e):
+        self._hover = False
+        self._pressed = False
+        self.update()
+        super().leaveEvent(e)
+
+    def mousePressEvent(self, e):
+        if e.button() == Qt.MouseButton.LeftButton:
+            self._pressed = True
+            self.update()
+        super().mousePressEvent(e)
+
+    def mouseReleaseEvent(self, e):
+        if self._pressed:
+            self._pressed = False
+            self.update()
+        super().mouseReleaseEvent(e)
+
+    def _base_color(self) -> QColor:
+        if self.kind == "min":
+            return QColor(255, 185, 90)
+        return QColor(255, 98, 110)
+
+    def _icon_pen(self) -> QPen:
+        pen = QPen(QColor(255, 255, 255, 235))
+        pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+        pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
+        pen.setWidthF(1.9)
+        return pen
+
+    def paintEvent(self, e):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        rect = self.rect().adjusted(3, 3, -3, -3)
+        radius = rect.height() / 2
+        base = self._base_color()
+        top = QColor(base)
+        bottom = QColor(base)
+        if self._pressed:
+            top = top.darker(125)
+            bottom = bottom.darker(135)
+        elif self._hover:
+            top = top.lighter(120)
+            bottom = bottom.lighter(105)
+        else:
+            top = top.lighter(112)
+            bottom = bottom.darker(112)
+        gradient = QLinearGradient(rect.topLeft(), rect.bottomRight())
+        gradient.setColorAt(0.0, top)
+        gradient.setColorAt(1.0, bottom)
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(gradient)
+        painter.drawRoundedRect(rect, radius, radius)
+
+        border = QColor(bottom)
+        border.setAlpha(200)
+        painter.setPen(QPen(border.darker(115), 1.2))
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        painter.drawRoundedRect(rect.adjusted(0.6, 0.6, -0.6, -0.6), radius - 0.6, radius - 0.6)
+
+        painter.setPen(self._icon_pen())
+        if self.kind == "min":
+            y = rect.center().y()
+            painter.drawLine(rect.left() + 6, y, rect.right() - 6, y)
+        else:
+            painter.drawLine(rect.left() + 6, rect.top() + 6, rect.right() - 6, rect.bottom() - 6)
+            painter.drawLine(rect.left() + 6, rect.bottom() - 6, rect.right() - 6, rect.top() + 6)
+
+
 class TitleBar(QWidget):
     def __init__(self, parent, title="iBase 激活"):
         super().__init__(parent)
@@ -522,26 +603,24 @@ class TitleBar(QWidget):
         self.setMaximumHeight(42)
         self.drag = None
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+        self.setStyleSheet("background: transparent;")
         self.lab = QLabel(title); self.lab.setObjectName("Sub")
-        self.btn_min = QPushButton(""); self.btn_min.setObjectName("MacMin"); self.btn_min.setFixedSize(18, 18)
-        self.btn_x   = QPushButton(""); self.btn_x.setObjectName("MacClose"); self.btn_x.setFixedSize(18, 18)
+        self.btn_min = TitleButton("min", self)
+        self.btn_x   = TitleButton("close", self)
         for btn, tip in ((self.btn_min, "最小化"), (self.btn_x, "关闭")):
             btn.setToolTip(tip)
-            btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        row = QHBoxLayout(self); row.setContentsMargins(14,8,14,4); row.setSpacing(10)
+        row = QHBoxLayout(self); row.setContentsMargins(18, 8, 18, 6); row.setSpacing(12)
         row.addWidget(self.lab); row.addStretch(1); row.addWidget(self.btn_min); row.addWidget(self.btn_x)
         self.btn_min.clicked.connect(parent.showMinimized); self.btn_x.clicked.connect(parent.close)
     def paintEvent(self, e):
         super().paintEvent(e)
         p = QPainter(self)
-        p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        grad = QLinearGradient(0, 0, 0, self.height())
-        grad.setColorAt(0.0, QColor(255, 255, 255, 210))
-        grad.setColorAt(1.0, QColor(232, 238, 252, 170))
-        p.fillRect(self.rect(), grad)
-        p.setPen(QColor(190, 200, 220, 140))
-        p.drawLine(self.rect().bottomLeft(), self.rect().bottomRight())
+        p.setRenderHint(QPainter.RenderHint.Antialiasing, False)
+        pen = QPen(QColor(185, 195, 215, 140))
+        pen.setWidthF(1.0)
+        p.setPen(pen)
+        y = self.height() - 1
+        p.drawLine(0, y, self.width(), y)
     def mousePressEvent(self, e):
         if e.button() == Qt.MouseButton.LeftButton:
             self.drag = e.globalPosition().toPoint() - self.window().frameGeometry().topLeft(); e.accept()
@@ -568,6 +647,90 @@ class Banner(QLabel):
         ani.start(QPropertyAnimation.DeletionPolicy.DeleteWhenStopped)
 
 # ======================= 激活对话框 =======================
+class CenterPopup(QFrame):
+    def __init__(self, parent: Optional[QWidget] = None):
+        super().__init__(parent)
+        self.setObjectName("CenterPopup")
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        self.setVisible(False)
+        self.setMinimumWidth(220)
+        self.setMaximumWidth(360)
+        self.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(28, 18, 28, 18)
+        self.label = QLabel("", self)
+        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.label.setWordWrap(True)
+        layout.addWidget(self.label)
+
+        shadow = QGraphicsDropShadowEffect(self.label)
+        shadow.setBlurRadius(36)
+        shadow.setOffset(0, 8)
+        shadow.setColor(QColor(15, 23, 42, 150))
+        self.label.setGraphicsEffect(shadow)
+
+        self._opacity = QGraphicsOpacityEffect(self)
+        self._opacity.setOpacity(0.0)
+        self.setGraphicsEffect(self._opacity)
+
+        self._fade = QPropertyAnimation(self._opacity, b"opacity", self)
+        self._fade.finished.connect(self._on_fade_finished)
+        self._timer = QTimer(self)
+        self._timer.setSingleShot(True)
+        self._timer.timeout.connect(self._start_fade_out)
+        self._is_hiding = False
+
+        if parent:
+            parent.installEventFilter(self)
+
+    def eventFilter(self, obj, event):
+        if obj is self.parent() and self.isVisible() and event.type() in (QEvent.Type.Resize, QEvent.Type.Move):
+            self._center()
+        return super().eventFilter(obj, event)
+
+    def _center(self):
+        parent = self.parentWidget()
+        if not parent:
+            return
+        geo = parent.rect()
+        x = max(0, int((geo.width() - self.width()) / 2))
+        y = max(0, int((geo.height() - self.height()) / 2))
+        self.move(x, y)
+
+    def show_message(self, text: str, duration: int = 3000):
+        self.label.setText(text)
+        self.adjustSize()
+        self._center()
+        self.raise_()
+        self._timer.stop()
+        self._fade.stop()
+        self._is_hiding = False
+        self._opacity.setOpacity(0.0)
+        self.show()
+        self._fade.setDuration(160)
+        self._fade.setStartValue(0.0)
+        self._fade.setEndValue(1.0)
+        self._fade.start()
+        self._timer.start(max(0, duration))
+
+    def _start_fade_out(self):
+        if self._is_hiding:
+            return
+        self._fade.stop()
+        self._is_hiding = True
+        self._fade.setDuration(240)
+        self._fade.setStartValue(self._opacity.opacity())
+        self._fade.setEndValue(0.0)
+        self._fade.start()
+
+    def _on_fade_finished(self):
+        if self._is_hiding:
+            self.hide()
+            self._opacity.setOpacity(0.0)
+
+
 class ActivateDialog(QDialog):
     RADIUS = 14.0  # 圆角半径（逻辑像素）
 
@@ -605,7 +768,8 @@ class ActivateDialog(QDialog):
         self.ed_mc = QLineEdit(); self.ed_mc.setReadOnly(True); self.ed_mc.setText(self.mc); self.ed_mc.setCursorPosition(0)
         self.ed_mc.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         Theme.frost_field(self.ed_mc, blur=30, y_offset=2, alpha=56)
-        self.btn_copy = QPushButton("复制"); self.btn_copy.setObjectName("Secondary"); self.btn_copy.setFixedWidth(68)
+        self.btn_copy = QPushButton("复制"); self.btn_copy.setObjectName("Secondary")
+        self.btn_copy.setMinimumWidth(96)
         self.btn_copy.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed); self.btn_copy.clicked.connect(self.copy_mc)
         Theme.elevate_button(self.btn_copy, blur=20, y_offset=4, alpha=68)
         hint = QLabel("请将上述机器码发送给管理员以获取激活码。"); hint.setObjectName("Hint"); hint.setWordWrap(True)
@@ -625,7 +789,8 @@ class ActivateDialog(QDialog):
         Theme.frost_field(self.ed_code, blur=30, y_offset=2, alpha=64)
 
         # 右侧粘贴按钮（外部）
-        self.btn_paste = QPushButton("粘贴"); self.btn_paste.setObjectName("Secondary"); self.btn_paste.setFixedWidth(68)
+        self.btn_paste = QPushButton("粘贴"); self.btn_paste.setObjectName("Secondary")
+        self.btn_paste.setMinimumWidth(96)
         self.btn_paste.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed); self.btn_paste.clicked.connect(self.paste_code)
         Theme.elevate_button(self.btn_paste, blur=20, y_offset=4, alpha=68)
 
@@ -634,7 +799,7 @@ class ActivateDialog(QDialog):
         form.addWidget(self.btn_paste, 2, 5, 1, 1)
 
         form.setColumnStretch(1, 6)
-        form.setColumnMinimumWidth(5, 72)
+        form.setColumnMinimumWidth(5, 104)
 
         # 操作区
         actions = QHBoxLayout(); actions.setSpacing(10); actions.addStretch(1)
@@ -648,6 +813,7 @@ class ActivateDialog(QDialog):
         # 尺寸与圆角掩码
         self.setMinimumSize(520, 320); self.adjustSize()
         self.update_mask()
+        self.copy_popup = CenterPopup(self)
 
         # 入场轻浮动
         container.move(container.x(), container.y() + 8)
@@ -693,8 +859,8 @@ class ActivateDialog(QDialog):
 
     def copy_mc(self):
         QApplication.clipboard().setText(self.ed_mc.text(), QClipboard.Mode.Clipboard)
-        # 仅横幅，不再弹 Toast
-        self.banner.show_msg("机器码已复制", ok=True)
+        self.banner.hide()
+        self.copy_popup.show_message("机器码已复制", duration=3000)
 
     def paste_code(self):
         self.ed_code.setText(QApplication.clipboard().text(QClipboard.Mode.Clipboard))
