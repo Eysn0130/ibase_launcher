@@ -231,7 +231,7 @@ class Theme:
             border:1px solid rgba(255,255,255,0.20);
         }}
         QPushButton#Primary{{
-            color:rgba(20,20,22,0.92);
+            color:rgba(255,255,255,0.95);
             border:1px solid rgba(255,255,255,0.75);
             background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
                 stop:0 rgba({Theme.A1.red()},{Theme.A1.green()},{Theme.A1.blue()},0.60),
@@ -248,6 +248,14 @@ class Theme:
             background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
                 stop:0 rgba({Theme.A1.red()},{Theme.A1.green()},{Theme.A1.blue()},0.52),
                 stop:1 rgba({Theme.A2.red()},{Theme.A2.green()},{Theme.A2.blue()},0.52)
+            );
+        }}
+        QPushButton#Primary:disabled{{
+            color:rgba(255,255,255,0.55);
+            border:1px solid rgba(255,255,255,0.35);
+            background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
+                stop:0 rgba({Theme.A1.red()},{Theme.A1.green()},{Theme.A1.blue()},0.28),
+                stop:1 rgba({Theme.A2.red()},{Theme.A2.green()},{Theme.A2.blue()},0.28)
             );
         }}
         QPushButton#Secondary{{
