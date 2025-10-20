@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Optional
 
 from PyQt6.QtCore import (
-    Qt, QTimer, QPoint, QRectF, QPropertyAnimation, QEasingCurve, QProcess,
+    Qt, QTimer, QPoint, QPointF, QRectF, QPropertyAnimation, QEasingCurve, QProcess,
     QSize, QEvent, pyqtSignal
 )
 from PyQt6.QtGui import (
@@ -190,7 +190,6 @@ class Theme:
             );
             border: 1px solid rgba(120,135,170,0.28);
             border-radius: 18px;
-            box-shadow: 0 18px 40px rgba(15,23,42,0.16);
         }}
         QLabel#H1{{ font-size:17pt; font-weight:800; letter-spacing:.2px; }}
         QLabel#Sub{{ color:{Theme.MUT.name()}; }}
@@ -574,7 +573,7 @@ class TitleButton(QPushButton):
         else:
             top = top.lighter(112)
             bottom = bottom.darker(112)
-        gradient = QLinearGradient(rect.topLeft(), rect.bottomRight())
+        gradient = QLinearGradient(QPointF(rect.topLeft()), QPointF(rect.bottomRight()))
         gradient.setColorAt(0.0, top)
         gradient.setColorAt(1.0, bottom)
         painter.setPen(Qt.PenStyle.NoPen)
