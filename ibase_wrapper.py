@@ -191,55 +191,38 @@ class Theme:
         QLabel#Hint{{ color:{Theme.MUT.name()}; font-size:11pt; }}
         QLabel#Banner{{ padding:8px 12px; border-radius:10px; font-weight:700; }}
         QLineEdit{{
-            background: rgba(255,255,255,0.78);
-            border: 1px solid rgba(140,150,175,0.34);
-            border-radius:12px;
-            padding:7px 12px;
-            min-height:34px;
-            font-size:13pt;
-            color: rgba(12,12,16,0.92);
-            selection-background-color: rgba(120,170,255,0.35);
-            selection-color: rgba(12,12,16,0.95);
+            background: rgba(240,248,255,0.98);
+            border: 1px solid rgba(140,150,175,0.28);
+            border-radius:10px; padding:7px 10px; min-height:32px; font-size:13pt;
         }}
-        QLineEdit:focus{{
-            border:1px solid rgba(120,170,255,0.92);
-            background: rgba(255,255,255,0.86);
-        }}
-        QLineEdit::placeholder{{ color: rgba(12,12,16,0.42); }}
+        QLineEdit:focus{{ border:1px solid rgba(120,170,255,0.85); }}
         QLineEdit[readOnly="true"]{{
-            color: rgba(70,120,180,0.94);
-            font-family:Consolas,'Cascadia Mono','JetBrains Mono',monospace;
-            letter-spacing:.6px;
-            font-size:13pt;
-            background: rgba(240,248,255,0.35);
+            color:#D6ECFF; font-family:Consolas,'Cascadia Mono','JetBrains Mono',monospace;
+            letter-spacing:.5px; font-size:13pt;
         }}
         QPushButton{{
-            min-height:36px;
-            padding:0 22px;
-            border-radius:18px;
+            min-height:32px;
+            padding:0 18px;
+            border-radius:12px;
             font-weight:700;
-            letter-spacing:.25px;
-            color:rgba(28,28,30,0.88);
+            letter-spacing:.2px;
+            color:#1c1c1e;
             background: qlineargradient(x1:0,y1:0,x2:0,y2:1,
-                stop:0 rgba(255,255,255,0.72),
-                stop:1 rgba(255,255,255,0.30)
+                stop:0 rgba(255,255,255,0.68),
+                stop:1 rgba(255,255,255,0.32)
             );
             border:1px solid rgba(255,255,255,0.55);
         }}
         QPushButton:hover{{
-            color:rgba(0,0,0,0.92);
-            border:1px solid rgba(255,255,255,0.80);
             background: qlineargradient(x1:0,y1:0,x2:0,y2:1,
-                stop:0 rgba(255,255,255,0.82),
+                stop:0 rgba(255,255,255,0.78),
                 stop:1 rgba(255,255,255,0.42)
             );
         }}
         QPushButton:pressed{{
-            color:rgba(0,0,0,0.78);
-            border:1px solid rgba(200,210,230,0.75);
             background: qlineargradient(x1:0,y1:0,x2:0,y2:1,
-                stop:0 rgba(238,238,240,0.74),
-                stop:1 rgba(220,222,230,0.36)
+                stop:0 rgba(235,235,235,0.70),
+                stop:1 rgba(235,235,235,0.34)
             );
         }}
         QPushButton:disabled{{
@@ -249,22 +232,22 @@ class Theme:
         }}
         QPushButton#Primary{{
             color:rgba(255,255,255,0.95);
-            border:1px solid rgba(255,255,255,0.82);
+            border:1px solid rgba(255,255,255,0.75);
             background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
-                stop:0 rgba({Theme.A1.red()},{Theme.A1.green()},{Theme.A1.blue()},0.72),
-                stop:1 rgba({Theme.A2.red()},{Theme.A2.green()},{Theme.A2.blue()},0.72)
+                stop:0 rgba({Theme.A1.red()},{Theme.A1.green()},{Theme.A1.blue()},0.60),
+                stop:1 rgba({Theme.A2.red()},{Theme.A2.green()},{Theme.A2.blue()},0.60)
             );
         }}
         QPushButton#Primary:hover{{
             background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
-                stop:0 rgba({Theme.A1.red()},{Theme.A1.green()},{Theme.A1.blue()},0.84),
-                stop:1 rgba({Theme.A2.red()},{Theme.A2.green()},{Theme.A2.blue()},0.84)
+                stop:0 rgba({Theme.A1.red()},{Theme.A1.green()},{Theme.A1.blue()},0.70),
+                stop:1 rgba({Theme.A2.red()},{Theme.A2.green()},{Theme.A2.blue()},0.70)
             );
         }}
         QPushButton#Primary:pressed{{
             background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
-                stop:0 rgba({Theme.A1.red()},{Theme.A1.green()},{Theme.A1.blue()},0.62),
-                stop:1 rgba({Theme.A2.red()},{Theme.A2.green()},{Theme.A2.blue()},0.62)
+                stop:0 rgba({Theme.A1.red()},{Theme.A1.green()},{Theme.A1.blue()},0.52),
+                stop:1 rgba({Theme.A2.red()},{Theme.A2.green()},{Theme.A2.blue()},0.52)
             );
         }}
         QPushButton#Primary:disabled{{
@@ -276,43 +259,13 @@ class Theme:
             );
         }}
         QPushButton#Secondary{{
-            color:rgba(28,28,30,0.85);
-            background: rgba(255,255,255,0.32);
-            border:1px solid rgba(255,255,255,0.54);
+            color:rgba(28,28,30,0.82);
+            background: rgba(255,255,255,0.24);
+            border:1px solid rgba(255,255,255,0.48);
         }}
-        QPushButton#Secondary:hover{{
-            color:rgba(0,0,0,0.86);
-            background: rgba(255,255,255,0.40);
-        }}
-        QPushButton#Secondary:pressed{{
-            color:rgba(0,0,0,0.74);
-            background: rgba(255,255,255,0.26);
-        }}
-        QPushButton#MacMin, QPushButton#MacClose{{
-            min-height:0px;
-            min-width:0px;
-            padding:0px;
-            margin:0px;
-            border-radius:8px;
-            border:1px solid rgba(255,255,255,0.45);
-            background: transparent;
-        }}
-        QPushButton#MacMin{{ background: qradialgradient(cx:0.3,cy:0.3,radius:0.9,stop:0 #ffe29d, stop:1 #fbbc40); }}
-        QPushButton#MacClose{{ background: qradialgradient(cx:0.3,cy:0.3,radius:0.9,stop:0 #ff9a9e, stop:1 #ff5f57); }}
-        QPushButton#MacMin:hover{{ background: qradialgradient(cx:0.3,cy:0.3,radius:0.9,stop:0 #fff1c7, stop:1 #fdc55b); }}
-        QPushButton#MacClose:hover{{ background: qradialgradient(cx:0.3,cy:0.3,radius:0.9,stop:0 #ffc0c4, stop:1 #ff746b); }}
-        QPushButton#MacMin:pressed{{ background: qradialgradient(cx:0.3,cy:0.3,radius:0.9,stop:0 #ffe6a6, stop:1 #f0ab32); }}
-        QPushButton#MacClose:pressed{{ background: qradialgradient(cx:0.3,cy:0.3,radius:0.9,stop:0 #ffaaa9, stop:1 #f54e49); }}
+        QPushButton#Secondary:hover{{ background: rgba(255,255,255,0.30); }}
+        QPushButton#Secondary:pressed{{ background: rgba(255,255,255,0.20); }}
         """)
-
-    @staticmethod
-    def elevate_button(btn: QPushButton, blur: int = 24, y_offset: int = 6, alpha: int = 65):
-        effect = QGraphicsDropShadowEffect(btn)
-        effect.setBlurRadius(blur)
-        effect.setOffset(0, y_offset)
-        effect.setColor(QColor(15, 23, 42, alpha))
-        btn.setGraphicsEffect(effect)
-        btn.setCursor(Qt.CursorShape.PointingHandCursor)
 
 # ======================= 小组件 =======================
 class AnimatedBar(QWidget):
