@@ -12,11 +12,15 @@ import os
 import sys
 import json
 import uuid
+import math
+import time
 import hashlib
+import string
 import platform
 import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 
 from PyQt6.QtCore import (
     Qt, QTimer, QPoint, QPointF, QRectF, QPropertyAnimation, QEasingCurve, QProcess,
@@ -47,6 +51,99 @@ IBASE_EXE_PATH = base_dir() / "iBase.exe"
 
 # !!! 将此密钥替换为你的私钥（至少 32 字符）
 SECRET_KEY     = "REPLACE_WITH_YOUR_SECRET_32_CHARS_MIN"
+
+CODE_GROUP_SIZE = 4
+CODE_TOTAL_LENGTH = 16
+CODE_SEPARATOR = "-"
+EXPIRE_SEGMENT_HEX_LENGTH = 8
+SIGNATURE_HEX_LENGTH = CODE_TOTAL_LENGTH - EXPIRE_SEGMENT_HEX_LENGTH
+
+
+def _clean_hex(text: str) -> str:
+    allowed = set(string.hexdigits.upper())
+    return "".join(ch for ch in (text or "").upper() if ch in allowed)
+
+
+def _normalize_code(text: str) -> str:
+    cleaned = _clean_hex(text)
+    if len(cleaned) > CODE_TOTAL_LENGTH:
+        cleaned = cleaned[:CODE_TOTAL_LENGTH]
+    return cleaned
+
+
+def format_code_groups(text: str) -> str:
+    cleaned = _normalize_code(text)
+    if not cleaned:
+        return ""
+    return CODE_SEPARATOR.join(
+        cleaned[i : i + CODE_GROUP_SIZE] for i in range(0, len(cleaned), CODE_GROUP_SIZE)
+    )
+
+
+def _current_day_key() -> int:
+    return int(time.time() // 86400)
+
+
+def _day_key_to_datetime(day_key: int) -> datetime:
+    try:
+        return datetime.fromtimestamp(day_key * 86400, tz=timezone.utc)
+    except (OSError, OverflowError, ValueError):
+        return datetime.fromtimestamp(0, tz=timezone.utc)
+
+
+def _format_day_key(day_key: int) -> str:
+    return _day_key_to_datetime(day_key).strftime("%Y-%m-%d")
+
+
+def _activation_signature(machine_code_raw: str, expires_hex: str) -> str:
+    payload = machine_code_raw + SECRET_KEY + expires_hex
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest().upper()[:SIGNATURE_HEX_LENGTH]
+
+
+def encode_activation_code_raw(machine_code_raw: str, expires_days: int) -> str:
+    expires_days = int(expires_days)
+    expires_hex = f"{expires_days:0{EXPIRE_SEGMENT_HEX_LENGTH}X}"
+    signature = _activation_signature(machine_code_raw, expires_hex)
+    return expires_hex + signature
+
+
+def parse_activation_code(text: str) -> Optional[Tuple[int, str, str]]:
+    raw = _normalize_code(text)
+    if len(raw) != CODE_TOTAL_LENGTH:
+        return None
+    expires_hex = raw[:EXPIRE_SEGMENT_HEX_LENGTH]
+    signature = raw[EXPIRE_SEGMENT_HEX_LENGTH:]
+    try:
+        expires_days = int(expires_hex, 16)
+    except ValueError:
+        return None
+    return expires_days, expires_hex, signature
+
+
+def calc_activation_code(machine_code: str, expires_days) -> str:
+    """供管理员使用：根据机器码与过期日生成激活码。
+
+    expires_days 可传入 int（按天计数）或 datetime（UTC/本地均可）。
+    """
+
+    raw_machine = _normalize_code(machine_code)
+    if len(raw_machine) != CODE_TOTAL_LENGTH:
+        raise ValueError("machine_code must be 16 hex characters")
+
+    if isinstance(expires_days, datetime):
+        dt = expires_days
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        else:
+            dt = dt.astimezone(timezone.utc)
+        expires_days = int(dt.timestamp() // 86400)
+    elif isinstance(expires_days, (int, float)):
+        expires_days = int(expires_days)
+    else:
+        raise TypeError("expires_days must be int or datetime")
+
+    raw_code = encode_activation_code_raw(raw_machine, expires_days)
+    return format_code_groups(raw_code)
 
 # ======================= 机器码 / 激活码 =======================
 def _win_machine_guid() -> str:
@@ -89,20 +186,35 @@ def _mac_hex() -> str:
     except Exception:
         return ""
 
-def get_machine_code() -> str:
+def _machine_fingerprint() -> str:
     parts = []
     if os.name == "nt":
         g = _win_machine_guid()
-        if g: parts.append(g)
+        if g:
+            parts.append(g)
         u = _wmic_uuid()
-        if u: parts.append(u)
-    parts += [platform.node(), platform.system(), platform.release(),
-              platform.version(), _mac_hex() or "UNKNOWNMAC"]
+        if u:
+            parts.append(u)
+    parts += [
+        platform.node(),
+        platform.system(),
+        platform.release(),
+        platform.version(),
+        _mac_hex() or "UNKNOWNMAC",
+    ]
     raw = "|".join([p for p in parts if p])
-    return hashlib.sha1(raw.encode("utf-8")).hexdigest().upper()
+    digest = hashlib.sha256(raw.encode("utf-8")).hexdigest().upper()
+    if len(digest) < CODE_TOTAL_LENGTH:
+        digest = digest.ljust(CODE_TOTAL_LENGTH, "0")
+    return digest
 
-def calc_activation_code(mc: str) -> str:
-    return hashlib.sha256((mc + SECRET_KEY).encode("utf-8")).hexdigest().upper()[:16]
+
+def get_machine_code_raw() -> str:
+    return _normalize_code(_machine_fingerprint())
+
+
+def get_machine_code_display() -> str:
+    return format_code_groups(get_machine_code_raw())
 
 # ======================= 配置读写 =======================
 def load_config() -> dict:
@@ -603,7 +715,7 @@ class TitleButton(QPushButton):
 
 
 class TitleBar(QWidget):
-    def __init__(self, parent, title="iBase 激活"):
+    def __init__(self, parent, title="设备授权"):
         super().__init__(parent)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.setMaximumHeight(42)
@@ -738,7 +850,9 @@ class ActivateDialog(QDialog):
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setModal(True)
-        self.mc = mc
+        self.mc_raw = _normalize_code(mc)
+        self.mc_display = format_code_groups(self.mc_raw)
+        self.activation_payload: Optional[dict] = None
 
         # 外层布局（边距=0，卡片铺满圆角，不留黑圈）
         outer = QVBoxLayout(self); outer.setContentsMargins(0, 0, 0, 0)
@@ -750,12 +864,12 @@ class ActivateDialog(QDialog):
         card = QVBoxLayout(container); card.setContentsMargins(22, 16, 22, 18); card.setSpacing(10)
 
         # 标题栏 / 光带 / 横幅
-        self.titlebar = TitleBar(self, "iBase 激活"); card.addWidget(self.titlebar)
+        self.titlebar = TitleBar(self, "设备授权"); card.addWidget(self.titlebar)
         self.bar = AnimatedBar(); card.addWidget(self.bar)
         self.banner = Banner(""); self.banner.hide(); card.addWidget(self.banner)
 
         # 标题与说明
-        h1 = QLabel("iBase 激活"); h1.setObjectName("H1")
+        h1 = QLabel("设备授权"); h1.setObjectName("H1")
         sub = QLabel("为保障使用安全与版权合规，首次使用需完成设备授权。"); sub.setObjectName("Sub"); sub.setWordWrap(True)
         card.addWidget(h1); card.addWidget(sub)
 
@@ -764,7 +878,10 @@ class ActivateDialog(QDialog):
 
         # —— 机器码 —— #
         lab_mc = QLabel("机器码"); lab_mc.setObjectName("Sub")
-        self.ed_mc = QLineEdit(); self.ed_mc.setReadOnly(True); self.ed_mc.setText(self.mc); self.ed_mc.setCursorPosition(0)
+        self.ed_mc = QLineEdit()
+        self.ed_mc.setReadOnly(True)
+        self.ed_mc.setText(self.mc_display)
+        self.ed_mc.setCursorPosition(0)
         self.ed_mc.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         Theme.frost_field(self.ed_mc, blur=30, y_offset=2, alpha=56)
         self.btn_copy = QPushButton("复制"); self.btn_copy.setObjectName("Secondary")
@@ -781,6 +898,7 @@ class ActivateDialog(QDialog):
         # —— 激活码（右侧内嵌眼睛） —— #
         lab_cd = QLabel("激活码"); lab_cd.setObjectName("Sub")
         self.ed_code = PasswordLineEdit(); self.ed_code.setPlaceholderText("请输入激活码")
+        self.ed_code.setInputMask(">HHHH-HHHH-HHHH-HHHH;_")
         self.ed_code.textChanged.connect(self.on_code_change)
         self.ed_code.returnPressed.connect(self.on_accept)
         self.ed_code.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
@@ -804,7 +922,7 @@ class ActivateDialog(QDialog):
         actions = QHBoxLayout(); actions.setSpacing(10); actions.addStretch(1)
         self.btn_cancel = QPushButton("取消"); self.btn_cancel.setObjectName("Secondary"); self.btn_cancel.clicked.connect(self.reject)
         Theme.elevate_button(self.btn_cancel, blur=24, y_offset=5, alpha=70)
-        self.btn_ok = QPushButton("确认登录"); self.btn_ok.setObjectName("Primary"); self.btn_ok.clicked.connect(self.on_accept)
+        self.btn_ok = QPushButton("确认激活"); self.btn_ok.setObjectName("Primary"); self.btn_ok.clicked.connect(self.on_accept)
         Theme.elevate_button(self.btn_ok, blur=32, y_offset=7, alpha=90)
         self.btn_ok.setEnabled(False); actions.addWidget(self.btn_cancel); actions.addWidget(self.btn_ok)
         card.addLayout(actions)
@@ -879,28 +997,172 @@ class ActivateDialog(QDialog):
         self._error_popup = msg
 
     def paste_code(self):
-        self.ed_code.setText(QApplication.clipboard().text(QClipboard.Mode.Clipboard))
+        text = QApplication.clipboard().text(QClipboard.Mode.Clipboard)
+        formatted = format_code_groups(text)
+        self.ed_code.setText(formatted)
+        current = self.ed_code.text()
+        next_pos = current.find("_")
+        if next_pos == -1:
+            next_pos = len(current)
+        self.ed_code.setCursorPosition(next_pos)
 
     def on_code_change(self, s: str):
-        self.btn_ok.setEnabled(len((s or "").strip()) >= 4)
+        clean = _normalize_code(s)
+        self.btn_ok.setEnabled(len(clean) == CODE_TOTAL_LENGTH)
         self.banner.hide()
 
     def on_accept(self):
-        code = (self.ed_code.text() or "").strip().upper()
-        if not code:
-            self.banner.show_msg("请输入激活码", ok=False)
+        raw_text = self.ed_code.text()
+        clean = _normalize_code(raw_text)
+        if len(clean) != CODE_TOTAL_LENGTH:
+            self.banner.show_msg("激活码格式不正确，请确认 16 位编码。", ok=False)
+            self._show_error_popup("激活码格式不正确，请确认 16 位编码。")
             self._shake(self)
             return
-        expect = calc_activation_code(self.mc)
-        if code != expect:
+
+        parsed = parse_activation_code(raw_text)
+        if not parsed:
+            self.banner.show_msg("激活码格式不正确，请重新输入。", ok=False)
+            self._show_error_popup("激活码格式不正确，请重新输入。")
+            self._shake(self)
+            return
+
+        expires_days, expires_hex, signature = parsed
+        expected_raw = encode_activation_code_raw(self.mc_raw, expires_days)
+
+        if clean != expected_raw or signature != _activation_signature(self.mc_raw, expires_hex):
             self.banner.show_msg("激活码不正确，请核对后再试。", ok=False)
             self._show_error_popup("激活码不正确，请核对后再试。")
             self._shake(self)
             return
+
+        if expires_days < _current_day_key():
+            msg = f"激活码已于 {_format_day_key(expires_days)} 过期，请联系管理员重新获取。"
+            self.banner.show_msg(msg, ok=False)
+            self._show_error_popup(msg)
+            self._shake(self)
+            return
+
+        self.activation_payload = {
+            "raw_code": expected_raw,
+            "expires_days": expires_days,
+        }
+
         self.banner.show_msg("激活成功 ✓", ok=True)
         QTimer.singleShot(200, self.accept)
 
 # ======================= 启动 iBase.exe =======================
+class LoadingDots(QWidget):
+    def __init__(self, parent: Optional[QWidget] = None):
+        super().__init__(parent)
+        self._phase = 0
+        self._timer = QTimer(self)
+        self._timer.setInterval(130)
+        self._timer.timeout.connect(self._advance)
+        self._timer.start()
+        self.setFixedHeight(28)
+
+    def sizeHint(self):
+        return QSize(84, 28)
+
+    def _advance(self):
+        self._phase = (self._phase + 1) % 60
+        self.update()
+
+    def paintEvent(self, e):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        width = self.width()
+        height = self.height()
+        spacing = width / 4.0
+        centers = [spacing, spacing * 2, spacing * 3]
+        colors = [Theme.A1, Theme.A2, Theme.A3]
+        for idx, cx in enumerate(centers):
+            t = ((self._phase + idx * 20) % 60) / 60.0
+            scale = 0.45 + 0.55 * (0.5 - math.cos(t * math.pi * 2) / 2.0)
+            radius = min(height / 2.2, 8.0) * scale
+            color = QColor(colors[idx % len(colors)])
+            color.setAlpha(int(150 + 90 * scale))
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(color)
+            painter.drawEllipse(QPointF(cx, height / 2.0), radius, radius)
+
+
+class LoadingDialog(QDialog):
+    RADIUS = 16.0
+
+    def __init__(self, message: str = "加载中，请稍等", parent: Optional[QWidget] = None):
+        super().__init__(parent)
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+        self.setModal(True)
+
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+
+        container = QFrame(self)
+        container.setObjectName("Card")
+        container.setProperty("class", "Card")
+        outer.addWidget(container)
+
+        card = QVBoxLayout(container)
+        card.setContentsMargins(28, 28, 28, 28)
+        card.setSpacing(18)
+
+        label = QLabel(message, container)
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        label.setObjectName("H1")
+
+        dots = LoadingDots(container)
+        dots.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+
+        bar = AnimatedBar(container)
+        bar.setFixedHeight(3)
+
+        card.addStretch(1)
+        card.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
+        card.addWidget(dots, alignment=Qt.AlignmentFlag.AlignCenter)
+        card.addWidget(bar)
+        card.addStretch(1)
+
+        self.setFixedSize(360, 220)
+        self.update_mask()
+
+    def showEvent(self, e):
+        super().showEvent(e)
+        screen = QApplication.primaryScreen()
+        if screen is not None:
+            geo = screen.availableGeometry()
+            self.move(
+                geo.center().x() - self.width() // 2,
+                geo.center().y() - self.height() // 2,
+            )
+
+    def update_mask(self):
+        if self.width() <= 0 or self.height() <= 0:
+            return
+        rect = self.rect().adjusted(0, 0, -1, -1)
+        path = QPainterPath()
+        path.addRoundedRect(QRectF(rect), self.RADIUS, self.RADIUS)
+        region = QRegion(path.toFillPolygon().toPolygon())
+        if not region.isEmpty():
+            self.setMask(region)
+
+    def resizeEvent(self, e):
+        super().resizeEvent(e)
+        self.update_mask()
+
+    def paintEvent(self, e):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.fillRect(self.rect(), Qt.GlobalColor.transparent)
+        rect = self.rect().adjusted(0, 0, -1, -1)
+        path = QPainterPath()
+        path.addRoundedRect(QRectF(rect), self.RADIUS, self.RADIUS)
+        painter.fillPath(path, Theme.BG)
+
+
 def start_ibase_exe() -> int:
     exe = str(IBASE_EXE_PATH)
     if not os.path.isfile(exe):
@@ -916,6 +1178,40 @@ def start_ibase_exe() -> int:
         except Exception:
             return 2
     return 0
+
+
+def _validate_cached_activation(cfg: dict, machine_code_raw: str) -> Optional[dict]:
+    if not cfg.get("activated"):
+        return None
+    bind = cfg.get("bind")
+    if not isinstance(bind, dict):
+        return None
+
+    stored_machine = _normalize_code(bind.get("machine_code", ""))
+    if stored_machine != machine_code_raw:
+        return None
+
+    stored_code = _normalize_code(bind.get("activation_code", ""))
+    if len(stored_code) != CODE_TOTAL_LENGTH:
+        return None
+
+    expires_days = bind.get("expires_days")
+    if not isinstance(expires_days, int):
+        return None
+
+    if stored_code != encode_activation_code_raw(machine_code_raw, expires_days):
+        return None
+
+    if expires_days < _current_day_key():
+        return None
+
+    return {"raw_code": stored_code, "expires_days": expires_days}
+
+
+def _launch_ibase_and_quit(app: QApplication, loader: QWidget):
+    exit_code = start_ibase_exe()
+    loader.close()
+    app.exit(exit_code)
 
 # ======================= 主流程 =======================
 def _safe_set_attr(name: str, value: bool = True):
@@ -933,23 +1229,31 @@ def main():
     Theme.apply(app)
 
     cfg = load_config()
-    mc = get_machine_code()
+    mc_raw = get_machine_code_raw()
 
-    activated = False
-    if cfg.get("activated") and isinstance(cfg.get("bind"), dict):
-        b = cfg["bind"]
-        if b.get("machine_code") == mc and b.get("activation_code") == calc_activation_code(mc):
-            activated = True
+    cache = _validate_cached_activation(cfg, mc_raw)
 
-    if not activated:
-        dlg = ActivateDialog(mc)
+    if cache is None:
+        dlg = ActivateDialog(mc_raw)
         if dlg.exec() != QDialog.DialogCode.Accepted:
             return 0
+        if not dlg.activation_payload:
+            return 0
+        cache = dlg.activation_payload
         cfg["activated"] = True
-        cfg["bind"] = {"machine_code": mc, "activation_code": calc_activation_code(mc)}
+        cfg["bind"] = {
+            "machine_code": mc_raw,
+            "activation_code": cache["raw_code"],
+            "expires_days": cache["expires_days"],
+        }
         save_config(cfg)
 
-    return start_ibase_exe()
+    loader = LoadingDialog()
+    loader.show()
+    loader.raise_()
+    loader.activateWindow()
+    QTimer.singleShot(120, lambda: _launch_ibase_and_quit(app, loader))
+    return app.exec()
 
 if __name__ == "__main__":
     sys.exit(main())
