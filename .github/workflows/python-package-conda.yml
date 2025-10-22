@@ -14,14 +14,14 @@ jobs:
     - name: Set up Python 3.11
       uses: actions/setup-python@v3
       with:
-        python-version: '3.11'  # 设置为 Python 3.11
+        python-version: '3.11'
 
     - name: Add conda to system path
       run: |
         echo $CONDA/bin >> $GITHUB_PATH
 
     - name: Cache conda environment
-      uses: actions/cache@v2
+      uses: actions/cache@v3  # 更新为 v3 或 v4
       with:
         path: ~/.conda
         key: ${{ runner.os }}-conda-${{ hashFiles('environment.yml') }}
