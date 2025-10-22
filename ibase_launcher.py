@@ -48,7 +48,7 @@ def base_dir() -> Path:
 IBASE_EXE_PATH = base_dir() / "iBase.exe"
 
 # !!! 将此密钥替换为你的私钥（至少 32 字符）
-SECRET_KEY     = "REPLACE_WITH_YOUR_SECRET_32_CHARS_MIN"
+SECRET_KEY  = "REPLACE_WITH_YOUR_SECRET_32_CHARS_MIN"
 
 # ======================= 机器码 / 激活码 =======================
 MACHINE_CODE_LENGTH = 16
@@ -83,10 +83,16 @@ def _wmic_uuid() -> str:
     if os.name != "nt":
         return ""
     try:
-        out = subprocess.check_output(
-            ["wmic", "csproduct", "get", "uuid"], stderr=subprocess.DEVNULL
+        import subprocess
+        # 使用 CREATE_NO_WINDOW 避免控制台窗口
+        out = subprocess.run(
+            ["wmic", "csproduct", "get", "uuid"],
+            capture_output=True,
+            text=True,
+            creationflags=subprocess.CREATE_NO_WINDOW,
+            check=True
         )
-        lines = out.decode(errors="ignore").strip().splitlines()
+        lines = out.stdout.strip().splitlines()
         if len(lines) >= 2:
             return lines[1].strip()
     except Exception:
@@ -659,6 +665,7 @@ class LoadingDialog(QDialog):
         label = QLabel("加载中，请稍等", card)
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         label.setObjectName("Sub")
+        label.setStyleSheet("color: black;")  # 设置字体颜色为黑色
 
         card_layout.addWidget(spinner, 0, Qt.AlignmentFlag.AlignCenter)
         card_layout.addWidget(label, 0, Qt.AlignmentFlag.AlignCenter)
@@ -1223,22 +1230,35 @@ class ActivateDialog(QDialog):
         self.banner.show_msg("激活成功 ✓", ok=True)
         QTimer.singleShot(200, self.accept)
 
-# ======================= 启动 iBase.exe =======================
+
 def start_ibase_exe() -> int:
     exe = str(IBASE_EXE_PATH)
     if not os.path.isfile(exe):
-        # 找不到可执行文件才用 Toast，避免无界面
-        w = QWidget(); w.hide()
-        t = Toast(w, "未找到 iBase.exe", Theme.BAD); t.show_at(40, 40)
+        w = QWidget()
+        w.hide()
+        t = Toast(w, "未找到 iBase.exe", Theme.BAD)
+        t.show_at(40, 40)
         return 1
-    ok, _pid = QProcess.startDetached(exe, [])
-    if not ok:
-        try:
-            subprocess.Popen([exe], shell=False)
-            return 0
-        except Exception:
-            return 2
-    return 0
+    try:
+        # 使用 subprocess.Popen，设置 CREATE_NO_WINDOW 和 DETACHED_PROCESS
+        subprocess.Popen(
+            [exe],
+            shell=False,
+            creationflags=subprocess.CREATE_NO_WINDOW | subprocess.DETACHED_PROCESS,  # 结合两种标志
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            stdin=subprocess.DEVNULL,  # 确保输入也重定向
+            start_new_session=True,
+            close_fds=True  # 关闭文件描述符以避免继承
+        )
+        return 0
+    except Exception as e:
+        print(f"启动 iBase.exe 失败：{e}")
+        w = QWidget()
+        w.hide()
+        t = Toast(w, f"启动 iBase.exe 失败：{str(e)}", Theme.BAD)
+        t.show_at(40, 40)
+        return 2
 
 # ======================= 主流程 =======================
 def _safe_set_attr(name: str, value: bool = True):
