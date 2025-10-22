@@ -1,36 +1,41 @@
 name: Build & Deploy Frontend
-
 on:
   push:
     branches: [ main ]
 
+# 关键：给 GITHUB_TOKEN 写权限
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
+      - uses: actions/setup-node@v4
         with:
-          node-version: 20  # 使用 Node.js 20 版本
+          node-version: 20
 
-      - name: Install dependencies
-        run: npm install --prefix frontend
+      - name: Install deps
+        working-directory: frontend
+        run: npm install
 
-      - name: Build the project
-        run: npm run build --prefix frontend
+      - name: Build
+        working-directory: frontend
+        run: npm run build
 
-      - name: Set up Git user identity
+      - name: Configure git user
         run: |
-          git config --global user.email "Eysn0130@users.noreply.github.com"  # 配置 Git 邮箱
-          git config --global user.name "Eysn0130"  # 配置 Git 用户名
+          git config --global user.email "Eysn0130@users.noreply.github.com"
+          git config --global user.name "Eysn0130"
 
-      - name: Deploy to GitHub Pages
+      # 用 Actions 提供的 GITHUB_TOKEN 进行推送
+      - name: Deploy to gh-pages
+        working-directory: frontend
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # GitHub Actions 提供的自动授权 token
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
-          npm run deploy --prefix frontend  # 使用 gh-pages 部署
+          # 让 gh-pages CLI 使用 token（支持 GITHUB_TOKEN/GH_TOKEN 环境变量）
+          npx gh-pages -d dist -u "github-actions[bot] <actions@github.com>"
+          # 如果你坚持用 npm script: npm run deploy 也行，只要保留上面的 env
