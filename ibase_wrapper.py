@@ -31,7 +31,7 @@ from PyQt6.QtGui import (
 from PyQt6.QtWidgets import (
     QApplication, QDialog, QLabel, QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout,
     QWidget, QFrame, QGridLayout, QSizePolicy, QGraphicsDropShadowEffect, QToolButton,
-    QGraphicsOpacityEffect, QMessageBox
+    QGraphicsOpacityEffect, QWIDGETSIZE_MAX
 )
 
 # ======================= 基本信息 =======================
@@ -254,9 +254,9 @@ class Theme:
             );
             border: 1px solid rgba(135,150,185,0.46);
             border-radius:14px;
-            padding:8px 42px 8px 16px;
+            padding:8px 22px 8px 16px;
             min-height:36px;
-            font-size:13pt;
+            font-size:12.4pt;
             color: rgba(6,8,16,0.94);
             selection-background-color: rgba(120,170,255,0.42);
             selection-color: rgba(6,8,16,0.98);
@@ -279,8 +279,8 @@ class Theme:
         QLineEdit[readOnly="true"]{{
             color: rgba(70,120,180,0.94);
             font-family:Consolas,'Cascadia Mono','JetBrains Mono',monospace;
-            letter-spacing:.6px;
-            font-size:13pt;
+            letter-spacing:.15px;
+            font-size:12.4pt;
             background: rgba(240,248,255,0.46);
         }}
         QPushButton{{
@@ -773,20 +773,88 @@ class TitleBar(QWidget):
         self.drag = None; e.accept()
 
 class Banner(QLabel):
-    def show_msg(self, text: str, ok=True):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._hide_timer = QTimer(self)
+        self._hide_timer.setSingleShot(True)
+        self._hide_timer.timeout.connect(self._fade_out)
+        self._fade = QPropertyAnimation(self, b"windowOpacity", self)
+        self._fade.setDuration(160)
+        self._fade.finished.connect(self._on_fade_finished)
+        self._fading_out = False
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        self.setMinimumHeight(0)
+        self.setMaximumHeight(0)
+
+    def show_msg(self, text: str, ok=True, duration_ms: Optional[int] = None):
+        self._hide_timer.stop()
+        if self._fade.state() == QPropertyAnimation.State.Running:
+            self._fade.stop()
+        self._fading_out = False
         self.setText(text)
         c = Theme.OK if ok else Theme.BAD
         self.setObjectName("Banner")
         self.setStyleSheet(
             f"QLabel#Banner{{background:rgba({c.red()},{c.green()},{c.blue()},220);color:white;}}"
         )
+        self.setMaximumHeight(QWIDGETSIZE_MAX)
         self.show()
+        self.adjustSize()
         self.setWindowOpacity(0.0)
         ani = QPropertyAnimation(self, b"windowOpacity", self)
         ani.setDuration(120)
         ani.setStartValue(0.0)
         ani.setEndValue(1.0)
         ani.start(QPropertyAnimation.DeletionPolicy.DeleteWhenStopped)
+        self._request_parent_resize()
+        if duration_ms:
+            self._hide_timer.start(max(0, duration_ms))
+
+    def _fade_out(self):
+        if not self.isVisible():
+            return
+        self._fading_out = True
+        self._fade.stop()
+        self._fade.setDuration(180)
+        self._fade.setStartValue(self.windowOpacity())
+        self._fade.setEndValue(0.0)
+        self._fade.start()
+
+    def _on_fade_finished(self):
+        if self._fading_out:
+            self._fading_out = False
+            super().hide()
+            self.setWindowOpacity(0.0)
+            self.clear()
+            self._collapse_and_update()
+
+    def hide(self):
+        self._hide_timer.stop()
+        if self._fade.state() == QPropertyAnimation.State.Running:
+            self._fade.stop()
+        self._fading_out = False
+        self.setWindowOpacity(0.0)
+        super().hide()
+        self.clear()
+        self._collapse_and_update()
+
+    def _collapse_and_update(self):
+        self.setMinimumHeight(0)
+        self.setMaximumHeight(0)
+        self.updateGeometry()
+        self._request_parent_resize()
+
+    def _request_parent_resize(self):
+        parent = self.parentWidget()
+        if parent is None:
+            return
+        parent.updateGeometry()
+        window = parent.window()
+        if window is None:
+            return
+        hint = window.sizeHint()
+        if hint.isValid():
+            window.resize(window.width(), max(window.minimumHeight(), hint.height()))
 
 # ======================= 激活对话框 =======================
 class CenterPopup(QFrame):
@@ -963,7 +1031,6 @@ class ActivateDialog(QDialog):
         self.setMinimumSize(520, 320); self.adjustSize()
         self.update_mask()
         self.copy_popup = CenterPopup(self)
-        self._error_popup = None
 
         # 入场轻浮动
         container.move(container.x(), container.y() + 8)
@@ -1012,22 +1079,6 @@ class ActivateDialog(QDialog):
         self.banner.hide()
         self.copy_popup.show_message("机器码已复制", duration=3000)
 
-    def _show_error_popup(self, text: str):
-        if self._error_popup is not None:
-            self._error_popup.close()
-            self._error_popup = None
-        msg = QMessageBox(self)
-        msg.setIcon(QMessageBox.Icon.Warning)
-        msg.setWindowTitle("激活失败")
-        msg.setText(text)
-        msg.setStandardButtons(QMessageBox.StandardButton.NoButton)
-        msg.setWindowModality(Qt.WindowModality.WindowModal)
-        msg.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
-        msg.show()
-        QTimer.singleShot(4000, msg.close)
-        msg.destroyed.connect(lambda: setattr(self, "_error_popup", None))
-        self._error_popup = msg
-
     def paste_code(self):
         self.ed_code.setText(QApplication.clipboard().text(QClipboard.Mode.Clipboard))
 
@@ -1040,14 +1091,13 @@ class ActivateDialog(QDialog):
         raw_input = (self.ed_code.text() or "").strip()
         normalized = normalize_activation_code(raw_input)
         if not normalized:
-            self.banner.show_msg("请输入激活码", ok=False)
+            self.banner.show_msg("请输入激活码", ok=False, duration_ms=4000)
             self._shake(self)
             return
         ok, expires_at, error_msg, normalized_code = verify_activation_code(self.mc, raw_input)
         if not ok:
             if error_msg:
-                self.banner.show_msg(error_msg, ok=False)
-                self._show_error_popup(error_msg)
+                self.banner.show_msg(error_msg, ok=False, duration_ms=4000)
             self._shake(self)
             return
         self.activation_code = normalized_code
@@ -1148,4 +1198,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-
