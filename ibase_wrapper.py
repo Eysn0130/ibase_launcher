@@ -1043,7 +1043,7 @@ class ActivateDialog(QDialog):
         ani.start(QPropertyAnimation.DeletionPolicy.DeleteWhenStopped)
 
     def copy_mc(self):
-        QApplication.clipboard().setText(self.ed_mc.text(), QClipboard.Mode.Clipboard)
+        QApplication.clipboard().setText(self.mc_display, QClipboard.Mode.Clipboard)
         self.banner.hide()
         self.copy_popup.show_message("机器码已复制", duration=3000)
 
@@ -1064,7 +1064,9 @@ class ActivateDialog(QDialog):
         self._error_popup = msg
 
     def paste_code(self):
-        self.ed_code.setText(QApplication.clipboard().text(QClipboard.Mode.Clipboard))
+        text = QApplication.clipboard().text(QClipboard.Mode.Clipboard)
+        normalized = _normalize_hex(text)[:CODE_LENGTH]
+        self.ed_code.setText(_group_code(normalized))
 
     def on_code_change(self, s: str):
         cursor = self.ed_code.cursorPosition()
