@@ -26,5 +26,10 @@ jobs:
       - name: Build the project
         run: npm run build --prefix frontend
 
+      - name: Set up Git user identity
+        run: |
+          git config --global user.email "Eysn0130@users.noreply.github.com"  # 配置 Git 邮箱
+          git config --global user.name "Eysn0130"  # 配置 Git 用户名
+
       - name: Deploy to GitHub Pages
         run: npm run deploy --prefix frontend  # 使用 gh-pages 部署
