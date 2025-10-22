@@ -16,8 +16,9 @@ import uuid
 import hashlib
 import platform
 import subprocess
+import datetime as dt
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 from PyQt6.QtCore import (
     Qt, QTimer, QPoint, QPointF, QRectF, QPropertyAnimation, QEasingCurve, QProcess,
@@ -54,6 +55,11 @@ MACHINE_CODE_LENGTH = 16
 ACTIVATION_CODE_LENGTH = 16
 EXPIRY_SEGMENT_LENGTH = 8
 HEX_DIGITS = "0123456789ABCDEF"
+
+PERMANENT_EXPIRY_SENTINEL = 0xFFFFFFFF
+DATE_RANGE_MIN = dt.date(1980, 1, 1)
+DATE_RANGE_MAX = dt.date(2300, 12, 31)
+_DATE_CODE_CACHE: Dict[str, Dict[str, int]] = {}
 
 
 def _win_machine_guid() -> str:
@@ -138,6 +144,41 @@ def calc_activation_code(mc: str, expires_at: int) -> str:
     return (expiry_hex + signature)[:ACTIVATION_CODE_LENGTH]
 
 
+def _derive_activation_code_v2(formatted_mc: str, token: str) -> str:
+    payload = f"{formatted_mc}::{SECRET_KEY}::{token}"
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest().upper()[:ACTIVATION_CODE_LENGTH]
+
+
+def _ensure_date_code_cache(mc: str) -> Dict[str, int]:
+    cache = _DATE_CODE_CACHE.get(mc)
+    if cache is not None:
+        return cache
+    formatted_mc = format_machine_code(mc)
+    cache = {}
+    current = DATE_RANGE_MIN
+    delta = dt.timedelta(days=1)
+    while current <= DATE_RANGE_MAX:
+        token = current.isoformat()
+        code = _derive_activation_code_v2(formatted_mc, token)
+        expires_dt = dt.datetime.combine(current, dt.time(23, 59, 59), tzinfo=dt.timezone.utc)
+        cache[code] = int(expires_dt.timestamp())
+        current += delta
+    _DATE_CODE_CACHE[mc] = cache
+    return cache
+
+
+def _verify_activation_code_v2(mc: str, normalized: str) -> Tuple[bool, Optional[int]]:
+    formatted_mc = format_machine_code(mc)
+    permanent_code = _derive_activation_code_v2(formatted_mc, "PERMANENT")
+    if normalized == permanent_code:
+        return True, PERMANENT_EXPIRY_SENTINEL
+    cache = _ensure_date_code_cache(mc)
+    expires_at = cache.get(normalized)
+    if expires_at is not None:
+        return True, expires_at
+    return False, None
+
+
 def verify_activation_code(mc: str, code: str) -> Tuple[bool, Optional[int], Optional[str], str]:
     normalized = normalize_activation_code(code)
     if len(normalized) != ACTIVATION_CODE_LENGTH:
@@ -148,12 +189,18 @@ def verify_activation_code(mc: str, code: str) -> Tuple[bool, Optional[int], Opt
     except ValueError:
         return False, None, "激活码格式不正确，请确认后重新输入。", normalized
     expected = calc_activation_code(mc, expires_at)
-    if normalized != expected:
-        return False, None, "激活码不正确，请核对后再试。", normalized
-    now = int(time.time())
-    if expires_at < now:
-        return False, expires_at, "激活码已过期，请联系管理员重新获取。", normalized
-    return True, expires_at, None, normalized
+    if normalized == expected:
+        now = int(time.time())
+        if expires_at < now:
+            return False, expires_at, "激活码已过期，请联系管理员重新获取。", normalized
+        return True, expires_at, None, normalized
+    new_ok, new_exp = _verify_activation_code_v2(mc, normalized)
+    if new_ok:
+        now = int(time.time())
+        if new_exp is not None and new_exp < now:
+            return False, new_exp, "激活码已过期，请联系管理员重新获取。", normalized
+        return True, new_exp, None, normalized
+    return False, None, "激活码不正确，请核对后再试。", normalized
 
 # ======================= 配置读写 =======================
 def load_config() -> dict:

@@ -280,6 +280,66 @@ const StatusMessage = styled.p`
   border-radius: 14px;
 `;
 
+const ResultSection = styled.section`
+  display: grid;
+  gap: 1.1rem;
+  background: rgba(14, 116, 144, 0.07);
+  border: 1px solid rgba(13, 148, 136, 0.24);
+  border-radius: 18px;
+  padding: clamp(1.5rem, 3vw, 2rem);
+`;
+
+const ResultHeading = styled.h2`
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f172a;
+`;
+
+const CodeDisplay = styled.code`
+  font-size: clamp(1.35rem, 3vw, 1.65rem);
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  background: rgba(15, 118, 110, 0.16);
+  color: #0f766e;
+  border-radius: 14px;
+  padding: 0.9rem 1.2rem;
+  text-align: center;
+  display: block;
+  box-shadow: inset 0 0 0 1px rgba(13, 148, 136, 0.28);
+`;
+
+const DetailsList = styled.dl`
+  margin: 0;
+  display: grid;
+  gap: 0.6rem;
+`;
+
+const DetailRow = styled.div`
+  display: grid;
+  gap: 0.35rem;
+  align-items: baseline;
+
+  @media (min-width: 640px) {
+    grid-template-columns: max-content 1fr;
+    gap: 1.5rem;
+  }
+`;
+
+const DetailTerm = styled.dt`
+  font-weight: 600;
+  color: rgba(15, 23, 42, 0.72);
+`;
+
+const DetailDescription = styled.dd`
+  margin: 0;
+  font-family: 'JetBrains Mono', 'Fira Code', 'SFMono-Regular', Menlo, Monaco, Consolas,
+    'Liberation Mono', 'Courier New', monospace;
+  color: rgba(15, 23, 42, 0.85);
+  word-break: break-word;
+`;
+
 const VisuallyHidden = styled.span`
   border: 0;
   clip: rect(0 0 0 0);
@@ -290,6 +350,18 @@ const VisuallyHidden = styled.span`
   position: absolute;
   width: 1px;
 `;
+
+const MACHINE_CODE_HEX_LENGTH = 16;
+
+const sanitizeMachineCode = (value = '') =>
+  (value || '')
+    .toUpperCase()
+    .replace(/[^A-F0-9]/g, '')
+    .slice(0, MACHINE_CODE_HEX_LENGTH)
+    .padEnd(MACHINE_CODE_HEX_LENGTH, '0');
+
+const formatMachineCodeSegments = (hexString) =>
+  hexString.match(/.{1,4}/g).join('-');
 
 const machineCodePattern = /^[A-F0-9]{4}(-[A-F0-9]{4}){3}$/i;
 
@@ -307,11 +379,46 @@ const initialFormState = {
   customDate: '',
 };
 
+const formatActivationCode = (hexString) =>
+  hexString
+    .slice(0, 16)
+    .match(/.{1,4}/g)
+    .join('-');
+
+const fallbackHash = (payload) => {
+  const base = btoa(payload)
+    .replace(/[^A-Z0-9]/gi, '')
+    .toUpperCase();
+
+  return (base + base).slice(0, 16);
+};
+
+const deriveActivationCode = async (machineCodeHex, secretKey, expiryToken) => {
+  const formattedMachineCode = formatMachineCodeSegments(machineCodeHex);
+  const encoder = new TextEncoder();
+  const source = `${formattedMachineCode}::${secretKey}::${expiryToken}`;
+  const data = encoder.encode(source);
+
+  if (window.crypto?.subtle) {
+    const buffer = await window.crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(buffer));
+    const hexString = hashArray
+      .map((byte) => byte.toString(16).padStart(2, '0'))
+      .join('')
+      .toUpperCase();
+    return formatActivationCode(hexString);
+  }
+
+  const fallback = fallbackHash(String.fromCharCode(...data));
+  return formatActivationCode(fallback);
+};
+
 function App() {
   const [formData, setFormData] = useState(initialFormState);
   const [errors, setErrors] = useState({});
   const [showSecret, setShowSecret] = useState(false);
   const [status, setStatus] = useState(null);
+  const [activation, setActivation] = useState(null);
 
   const minDate = useMemo(() => new Date().toISOString().split('T')[0], []);
 
@@ -388,27 +495,82 @@ function App() {
     return Object.keys(filteredErrors).length === 0;
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     if (!validateForm()) {
       setStatus({ type: 'error', message: '表单存在错误，请检查红色提示后重新提交。' });
+      setActivation(null);
       return;
     }
 
-    const payload = {
-      ...formData,
-      ...(formData.expiryOption === 'custom' && formData.customDate ? { expiresOn: formData.customDate } : {}),
-    };
+    const now = new Date();
+    let expiresOnLabel = '永久有效';
+    let expiryToken = 'PERMANENT';
+    let resolvedDate = null;
 
-    // 模拟提交
-    console.table(payload);
-    setStatus({ type: 'success', message: '配置已准备就绪，您可以继续后续流程。' });
+    switch (formData.expiryOption) {
+      case 'year': {
+        const next = new Date(now);
+        next.setFullYear(next.getFullYear() + 1);
+        expiresOnLabel = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(
+          next.getDate()
+        ).padStart(2, '0')} (一年有效)`;
+        resolvedDate = next.toISOString().split('T')[0];
+        expiryToken = resolvedDate;
+        break;
+      }
+      case 'day': {
+        const next = new Date(now);
+        next.setDate(next.getDate() + 1);
+        expiresOnLabel = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(
+          next.getDate()
+        ).padStart(2, '0')} (一天有效)`;
+        resolvedDate = next.toISOString().split('T')[0];
+        expiryToken = resolvedDate;
+        break;
+      }
+      case 'custom': {
+        expiresOnLabel = `${formData.customDate} (指定日期)`;
+        expiryToken = formData.customDate;
+        resolvedDate = formData.customDate;
+        break;
+      }
+      default:
+        break;
+    }
+
+    try {
+      const machineCodeHex = sanitizeMachineCode(formData.machineCode);
+      const formattedMachineCode = formatMachineCodeSegments(machineCodeHex);
+      const secretKeyValue = formData.secretKey.trim();
+
+      const activationCode = await deriveActivationCode(
+        machineCodeHex,
+        secretKeyValue,
+        expiryToken
+      );
+
+      setActivation({
+        code: activationCode,
+        machineCode: formattedMachineCode,
+        secretKey: secretKeyValue,
+        expiresOn: resolvedDate,
+        expiryLabel: expiresOnLabel,
+      });
+
+      setStatus({ type: 'success', message: '激活码已生成，可继续后续流程。' });
+    } catch (error) {
+      console.error('Failed to generate activation code', error);
+      setStatus({ type: 'error', message: '生成激活码时出现问题，请稍后重试。' });
+      setActivation(null);
+    }
   };
 
   const handleReset = () => {
     setFormData(initialFormState);
     setErrors({});
     setStatus(null);
+    setActivation(null);
   };
 
   const activeHelper = useMemo(() => {
@@ -548,6 +710,33 @@ function App() {
               <VisuallyHidden>{status.type === 'success' ? '成功：' : '错误：'}</VisuallyHidden>
               {status.message}
             </StatusMessage>
+          )}
+
+          {activation && (
+            <ResultSection aria-live="polite">
+              <ResultHeading>激活信息</ResultHeading>
+              <CodeDisplay>{activation.code}</CodeDisplay>
+              <DetailsList>
+                <DetailRow>
+                  <DetailTerm>机器码</DetailTerm>
+                  <DetailDescription>{activation.machineCode}</DetailDescription>
+                </DetailRow>
+                <DetailRow>
+                  <DetailTerm>SECRET_KEY</DetailTerm>
+                  <DetailDescription>{activation.secretKey}</DetailDescription>
+                </DetailRow>
+                <DetailRow>
+                  <DetailTerm>有效期</DetailTerm>
+                  <DetailDescription>{activation.expiryLabel}</DetailDescription>
+                </DetailRow>
+                {activation.expiresOn && (
+                  <DetailRow>
+                    <DetailTerm>到期日期</DetailTerm>
+                    <DetailDescription>{activation.expiresOn}</DetailDescription>
+                  </DetailRow>
+                )}
+              </DetailsList>
+            </ResultSection>
           )}
 
           <ButtonRow>
