@@ -51,6 +51,11 @@ IBASE_EXE_PATH = base_dir() / "iBase.exe"
 # !!! 将此密钥替换为你的私钥（至少 32 字符）
 SECRET_KEY     = "REPLACE_WITH_YOUR_SECRET_32_CHARS_MIN"
 
+CODE_LENGTH    = 16
+GROUP_SIZE     = 4
+HEX_CHARS      = "0123456789ABCDEF"
+ACTIVATION_EPOCH = date(2024, 1, 1)
+
 # ======================= 机器码 / 激活码 =======================
 def _win_machine_guid() -> str:
     if os.name != "nt":
@@ -1022,7 +1027,7 @@ class ActivateDialog(QDialog):
         ani.start(QPropertyAnimation.DeletionPolicy.DeleteWhenStopped)
 
     def copy_mc(self):
-        QApplication.clipboard().setText(self.ed_mc.text(), QClipboard.Mode.Clipboard)
+        QApplication.clipboard().setText(self.mc_display, QClipboard.Mode.Clipboard)
         self.banner.hide()
         self.copy_popup.show_message("机器码已复制", duration=3000)
 
