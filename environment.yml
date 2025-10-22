@@ -3,7 +3,7 @@ channels:
   - defaults
   - conda-forge
 dependencies:
-  - python=3.8  # 或者根据需求修改 Python 版本
+  - python=3.11  # 或者根据需求修改 Python 版本
   - pyqt6  # PyQt6 用于 GUI 开发
   - numpy  # 数学计算库
   - pandas  # 数据处理库
@@ -15,3 +15,4 @@ dependencies:
   - pip:
       - pillow  # 图像处理库，用于 PyQt 中的图像操作
       - pyserial  # 用于串口通信，如果涉及硬件
+
