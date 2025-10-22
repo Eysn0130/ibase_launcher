@@ -11,12 +11,13 @@ iBase.exe 启动包装器 · PyQt6（无黑边·高DPI·精致UI）
 import os
 import sys
 import json
+import time
 import uuid
 import hashlib
 import platform
 import subprocess
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 
 from PyQt6.QtCore import (
     Qt, QTimer, QPoint, QPointF, QRectF, QPropertyAnimation, QEasingCurve, QProcess,
@@ -25,12 +26,12 @@ from PyQt6.QtCore import (
 from PyQt6.QtGui import (
     QFont, QFontDatabase, QPalette, QColor, QClipboard,
     QPainter, QPainterPath, QLinearGradient, QRegion, QIcon, QPixmap, QPen,
-    QRadialGradient
+    QRadialGradient, QGuiApplication
 )
 from PyQt6.QtWidgets import (
     QApplication, QDialog, QLabel, QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout,
     QWidget, QFrame, QGridLayout, QSizePolicy, QGraphicsDropShadowEffect, QToolButton,
-    QGraphicsOpacityEffect, QMessageBox
+    QGraphicsOpacityEffect
 )
 
 # ======================= 基本信息 =======================
@@ -49,6 +50,12 @@ IBASE_EXE_PATH = base_dir() / "iBase.exe"
 SECRET_KEY     = "REPLACE_WITH_YOUR_SECRET_32_CHARS_MIN"
 
 # ======================= 机器码 / 激活码 =======================
+MACHINE_CODE_LENGTH = 16
+ACTIVATION_CODE_LENGTH = 16
+EXPIRY_SEGMENT_LENGTH = 8
+HEX_DIGITS = "0123456789ABCDEF"
+
+
 def _win_machine_guid() -> str:
     if os.name != "nt":
         return ""
@@ -89,6 +96,17 @@ def _mac_hex() -> str:
     except Exception:
         return ""
 
+def _sanitize_machine_code(raw: str) -> str:
+    raw = (raw or "").upper()
+    filtered = [ch for ch in raw if ch in HEX_DIGITS]
+    return "".join(filtered)[:MACHINE_CODE_LENGTH].ljust(MACHINE_CODE_LENGTH, "0")
+
+
+def format_machine_code(raw: str) -> str:
+    cleaned = _sanitize_machine_code(raw)
+    return "-".join(cleaned[i:i + 4] for i in range(0, len(cleaned), 4))
+
+
 def get_machine_code() -> str:
     parts = []
     if os.name == "nt":
@@ -99,10 +117,43 @@ def get_machine_code() -> str:
     parts += [platform.node(), platform.system(), platform.release(),
               platform.version(), _mac_hex() or "UNKNOWNMAC"]
     raw = "|".join([p for p in parts if p])
-    return hashlib.sha1(raw.encode("utf-8")).hexdigest().upper()
+    digest = hashlib.sha1(raw.encode("utf-8")).hexdigest().upper()
+    return digest[:MACHINE_CODE_LENGTH]
 
-def calc_activation_code(mc: str) -> str:
-    return hashlib.sha256((mc + SECRET_KEY).encode("utf-8")).hexdigest().upper()[:16]
+
+def _activation_signature(mc: str, expiry_hex: str) -> str:
+    payload = f"{mc}{expiry_hex}{SECRET_KEY}"
+    sig_len = ACTIVATION_CODE_LENGTH - len(expiry_hex)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest().upper()[:sig_len]
+
+
+def normalize_activation_code(code: str) -> str:
+    return "".join(ch for ch in (code or "").upper() if ch in HEX_DIGITS)
+
+
+def calc_activation_code(mc: str, expires_at: int) -> str:
+    """生成 16 位激活码：前 8 位为到期 Unix 时间戳（十六进制），后 8 位为签名。"""
+    expiry_hex = f"{max(0, int(expires_at)):0{EXPIRY_SEGMENT_LENGTH}X}"[-EXPIRY_SEGMENT_LENGTH:]
+    signature = _activation_signature(mc, expiry_hex)
+    return (expiry_hex + signature)[:ACTIVATION_CODE_LENGTH]
+
+
+def verify_activation_code(mc: str, code: str) -> Tuple[bool, Optional[int], Optional[str], str]:
+    normalized = normalize_activation_code(code)
+    if len(normalized) != ACTIVATION_CODE_LENGTH:
+        return False, None, "激活码格式不正确，请确认后重新输入。", normalized
+    expiry_hex = normalized[:EXPIRY_SEGMENT_LENGTH]
+    try:
+        expires_at = int(expiry_hex, 16)
+    except ValueError:
+        return False, None, "激活码格式不正确，请确认后重新输入。", normalized
+    expected = calc_activation_code(mc, expires_at)
+    if normalized != expected:
+        return False, None, "激活码不正确，请核对后再试。", normalized
+    now = int(time.time())
+    if expires_at < now:
+        return False, expires_at, "激活码已过期，请联系管理员重新获取。", normalized
+    return True, expires_at, None, normalized
 
 # ======================= 配置读写 =======================
 def load_config() -> dict:
@@ -510,6 +561,96 @@ class AnimatedBar(QWidget):
         g.setColorAt(min(1.0, ofs + 0.25), Theme.A3)
         p.fillRect(self.rect(), g)
 
+
+class SpinnerWidget(QWidget):
+    def __init__(self, parent: Optional[QWidget] = None):
+        super().__init__(parent)
+        self._angle = 0
+        self._timer = QTimer(self)
+        self._timer.setInterval(80)
+        self._timer.timeout.connect(self._tick)
+        self._timer.start()
+        self.setFixedSize(72, 72)
+
+    def _tick(self):
+        self._angle = (self._angle + 30) % 360
+        self.update()
+
+    def sizeHint(self):
+        return QSize(72, 72)
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        rect = self.rect().adjusted(8, 8, -8, -8)
+        pen = QPen(Theme.A2, 6)
+        pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+        painter.setPen(pen)
+        start_angle = int(self._angle * 16)
+        span_angle = int(300 * 16)
+        painter.drawArc(rect, start_angle, span_angle)
+
+
+class LoadingDialog(QDialog):
+    def __init__(self, parent: Optional[QWidget] = None):
+        super().__init__(parent)
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+        self.setModal(True)
+
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(22, 22, 22, 22)
+
+        card = QFrame(self)
+        card.setObjectName("Card")
+        card.setProperty("class", "Card")
+        card_layout = QVBoxLayout(card)
+        card_layout.setContentsMargins(36, 32, 36, 36)
+        card_layout.setSpacing(18)
+
+        spinner = SpinnerWidget(card)
+        label = QLabel("加载中，请稍等", card)
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        label.setObjectName("Sub")
+
+        card_layout.addWidget(spinner, 0, Qt.AlignmentFlag.AlignCenter)
+        card_layout.addWidget(label, 0, Qt.AlignmentFlag.AlignCenter)
+        outer.addWidget(card)
+
+        Theme.frost_field(card, blur=40, y_offset=10, alpha=90)
+        self.setFixedSize(self.sizeHint())
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self._center()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._center()
+
+    def _center(self):
+        parent = self.parentWidget()
+        if parent:
+            geo = parent.frameGeometry()
+        else:
+            screen = QGuiApplication.primaryScreen()
+            if not screen:
+                return
+            geo = screen.availableGeometry()
+        size = self.sizeHint()
+        x = geo.x() + (geo.width() - size.width()) // 2
+        y = geo.y() + (geo.height() - size.height()) // 2
+        self.move(x, y)
+
+    def sizeHint(self):
+        return QSize(260, 220)
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.fillRect(self.rect(), QColor(0, 0, 0, 0))
+
 # ======================= 激活对话框 =======================
 class TitleButton(QPushButton):
     def __init__(self, kind: str, parent=None):
@@ -611,6 +752,8 @@ class TitleBar(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setStyleSheet("background: transparent;")
         self.lab = QLabel(title); self.lab.setObjectName("Sub")
+        if not title:
+            self.lab.setVisible(False)
         self.btn_min = TitleButton("min", self)
         self.btn_x   = TitleButton("close", self)
         for btn, tip in ((self.btn_min, "最小化"), (self.btn_x, "关闭")):
@@ -738,7 +881,10 @@ class ActivateDialog(QDialog):
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setModal(True)
-        self.mc = mc
+        self.mc = _sanitize_machine_code(mc)
+        self.mc_display = format_machine_code(self.mc)
+        self.activation_code: Optional[str] = None
+        self.expires_at: Optional[int] = None
 
         # 外层布局（边距=0，卡片铺满圆角，不留黑圈）
         outer = QVBoxLayout(self); outer.setContentsMargins(0, 0, 0, 0)
@@ -750,7 +896,7 @@ class ActivateDialog(QDialog):
         card = QVBoxLayout(container); card.setContentsMargins(22, 16, 22, 18); card.setSpacing(10)
 
         # 标题栏 / 光带 / 横幅
-        self.titlebar = TitleBar(self, "iBase 激活"); card.addWidget(self.titlebar)
+        self.titlebar = TitleBar(self, ""); card.addWidget(self.titlebar)
         self.bar = AnimatedBar(); card.addWidget(self.bar)
         self.banner = Banner(""); self.banner.hide(); card.addWidget(self.banner)
 
@@ -764,7 +910,7 @@ class ActivateDialog(QDialog):
 
         # —— 机器码 —— #
         lab_mc = QLabel("机器码"); lab_mc.setObjectName("Sub")
-        self.ed_mc = QLineEdit(); self.ed_mc.setReadOnly(True); self.ed_mc.setText(self.mc); self.ed_mc.setCursorPosition(0)
+        self.ed_mc = QLineEdit(); self.ed_mc.setReadOnly(True); self.ed_mc.setText(self.mc_display); self.ed_mc.setCursorPosition(0)
         self.ed_mc.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         Theme.frost_field(self.ed_mc, blur=30, y_offset=2, alpha=56)
         self.btn_copy = QPushButton("复制"); self.btn_copy.setObjectName("Secondary")
@@ -797,6 +943,10 @@ class ActivateDialog(QDialog):
         form.addWidget(self.ed_code, 2, 1, 1, 4)
         form.addWidget(self.btn_paste, 2, 5, 1, 1)
 
+        # 文本对齐：与激活码输入框保持一致
+        margins = self.ed_code.textMargins()
+        self.ed_mc.setTextMargins(margins.left(), margins.top(), margins.right(), margins.bottom())
+
         form.setColumnStretch(1, 6)
         form.setColumnMinimumWidth(5, 104)
 
@@ -804,7 +954,7 @@ class ActivateDialog(QDialog):
         actions = QHBoxLayout(); actions.setSpacing(10); actions.addStretch(1)
         self.btn_cancel = QPushButton("取消"); self.btn_cancel.setObjectName("Secondary"); self.btn_cancel.clicked.connect(self.reject)
         Theme.elevate_button(self.btn_cancel, blur=24, y_offset=5, alpha=70)
-        self.btn_ok = QPushButton("确认登录"); self.btn_ok.setObjectName("Primary"); self.btn_ok.clicked.connect(self.on_accept)
+        self.btn_ok = QPushButton("确认激活"); self.btn_ok.setObjectName("Primary"); self.btn_ok.clicked.connect(self.on_accept)
         Theme.elevate_button(self.btn_ok, blur=32, y_offset=7, alpha=90)
         self.btn_ok.setEnabled(False); actions.addWidget(self.btn_cancel); actions.addWidget(self.btn_ok)
         card.addLayout(actions)
@@ -813,7 +963,6 @@ class ActivateDialog(QDialog):
         self.setMinimumSize(520, 320); self.adjustSize()
         self.update_mask()
         self.copy_popup = CenterPopup(self)
-        self._error_popup = None
 
         # 入场轻浮动
         container.move(container.x(), container.y() + 8)
@@ -858,45 +1007,33 @@ class ActivateDialog(QDialog):
         ani.start(QPropertyAnimation.DeletionPolicy.DeleteWhenStopped)
 
     def copy_mc(self):
-        QApplication.clipboard().setText(self.ed_mc.text(), QClipboard.Mode.Clipboard)
+        QApplication.clipboard().setText(self.mc_display, QClipboard.Mode.Clipboard)
         self.banner.hide()
         self.copy_popup.show_message("机器码已复制", duration=3000)
-
-    def _show_error_popup(self, text: str):
-        if self._error_popup is not None:
-            self._error_popup.close()
-            self._error_popup = None
-        msg = QMessageBox(self)
-        msg.setIcon(QMessageBox.Icon.Warning)
-        msg.setWindowTitle("激活失败")
-        msg.setText(text)
-        msg.setStandardButtons(QMessageBox.StandardButton.NoButton)
-        msg.setWindowModality(Qt.WindowModality.WindowModal)
-        msg.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
-        msg.show()
-        QTimer.singleShot(4000, msg.close)
-        msg.destroyed.connect(lambda: setattr(self, "_error_popup", None))
-        self._error_popup = msg
 
     def paste_code(self):
         self.ed_code.setText(QApplication.clipboard().text(QClipboard.Mode.Clipboard))
 
     def on_code_change(self, s: str):
-        self.btn_ok.setEnabled(len((s or "").strip()) >= 4)
+        normalized = normalize_activation_code(s)
+        self.btn_ok.setEnabled(len(normalized) >= 8)
         self.banner.hide()
 
     def on_accept(self):
-        code = (self.ed_code.text() or "").strip().upper()
-        if not code:
+        raw_input = (self.ed_code.text() or "").strip()
+        normalized = normalize_activation_code(raw_input)
+        if not normalized:
             self.banner.show_msg("请输入激活码", ok=False)
             self._shake(self)
             return
-        expect = calc_activation_code(self.mc)
-        if code != expect:
-            self.banner.show_msg("激活码不正确，请核对后再试。", ok=False)
-            self._show_error_popup("激活码不正确，请核对后再试。")
+        ok, expires_at, error_msg, normalized_code = verify_activation_code(self.mc, raw_input)
+        if not ok:
+            if error_msg:
+                self.banner.show_msg(error_msg, ok=False)
             self._shake(self)
             return
+        self.activation_code = normalized_code
+        self.expires_at = expires_at
         self.banner.show_msg("激活成功 ✓", ok=True)
         QTimer.singleShot(200, self.accept)
 
@@ -936,20 +1073,60 @@ def main():
     mc = get_machine_code()
 
     activated = False
-    if cfg.get("activated") and isinstance(cfg.get("bind"), dict):
-        b = cfg["bind"]
-        if b.get("machine_code") == mc and b.get("activation_code") == calc_activation_code(mc):
-            activated = True
+    expires_at: Optional[int] = None
+    stored_code: Optional[str] = None
+
+    bind = cfg.get("bind")
+    if isinstance(bind, dict):
+        saved_mc = _sanitize_machine_code(bind.get("machine_code", ""))
+        if saved_mc == mc:
+            stored_code = bind.get("activation_code", "")
+            ok, exp, _err, normalized = verify_activation_code(mc, stored_code or "")
+            if ok:
+                activated = True
+                expires_at = exp
+                needs_save = False
+                if not cfg.get("activated"):
+                    cfg["activated"] = True
+                    needs_save = True
+                if (
+                    normalized != (stored_code or "")
+                    or bind.get("expires_at") != exp
+                    or _sanitize_machine_code(bind.get("machine_code", "")) != mc
+                ):
+                    bind.update({
+                        "activation_code": normalized,
+                        "expires_at": exp,
+                        "machine_code": mc,
+                    })
+                    cfg["bind"] = bind
+                    needs_save = True
+                if needs_save:
+                    save_config(cfg)
 
     if not activated:
         dlg = ActivateDialog(mc)
         if dlg.exec() != QDialog.DialogCode.Accepted:
             return 0
+        stored_code = dlg.activation_code
+        expires_at = dlg.expires_at
+        if not stored_code or expires_at is None:
+            return 0
         cfg["activated"] = True
-        cfg["bind"] = {"machine_code": mc, "activation_code": calc_activation_code(mc)}
+        cfg["bind"] = {
+            "machine_code": mc,
+            "activation_code": stored_code,
+            "expires_at": expires_at,
+        }
         save_config(cfg)
 
-    return start_ibase_exe()
+    loader = LoadingDialog()
+    loader.show()
+    app.processEvents()
+    result = start_ibase_exe()
+    QTimer.singleShot(600, loader.accept)
+    loader.exec()
+    return result
 
 if __name__ == "__main__":
     sys.exit(main())
