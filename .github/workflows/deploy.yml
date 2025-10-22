@@ -3,11 +3,11 @@ name: Deploy Frontend
 on:
   push:
     branches:
-      - main  # 当 push 到 main 分支时触发部署
+      - main  # 当推送到 main 分支时触发工作流
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # 使用 Ubuntu 环境来运行工作流
 
     steps:
       # Step 1: 检出代码
@@ -18,7 +18,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '16'  # 设置 Node.js 版本，可以根据项目需要修改
+          node-version: '16'  # 设置 Node.js 版本
 
       # Step 3: 安装依赖
       - name: Install dependencies
@@ -26,10 +26,10 @@ jobs:
 
       # Step 4: 构建前端项目
       - name: Build frontend
-        run: npm run build  # 使用 Vite 构建项目
+        run: npm run build  # 使用 Vite 构建前端
 
       # Step 5: 部署到 GitHub Pages
       - name: Deploy to GitHub Pages
         run: |
-          npm install gh-pages --save-dev  # 安装 gh-pages 作为 dev 依赖
+          npm install gh-pages --save-dev  # 安装 gh-pages
           npm run deploy  # 使用 gh-pages 部署到 GitHub Pages
