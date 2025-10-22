@@ -3,32 +3,36 @@ name: Deploy Frontend
 on:
   push:
     branches:
-      - main  # 当推送到 main 分支时触发工作流
+      - main  # 监听 main 分支的推送
 
 jobs:
   build:
-    runs-on: ubuntu-latest  # 使用 Ubuntu 环境来运行工作流
+    runs-on: ubuntu-latest
 
     steps:
-      # Step 1: 检出代码
+      # 检出代码
       - name: Checkout code
         uses: actions/checkout@v2
 
-      # Step 2: 设置 Node.js 环境
+      # 设置 Node.js 环境
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
           node-version: '16'  # 设置 Node.js 版本
 
-      # Step 3: 安装依赖
+      # 安装依赖
       - name: Install dependencies
         run: npm install
 
-      # Step 4: 构建前端项目
-      - name: Build frontend
-        run: npm run build  # 使用 Vite 构建前端
+      # 安装 Vite
+      - name: Install Vite
+        run: npm install vite --save-dev
 
-      # Step 5: 部署到 GitHub Pages
+      # 构建前端项目
+      - name: Build frontend
+        run: npm run build  # 使用 Vite 构建项目
+
+      # 部署到 GitHub Pages
       - name: Deploy to GitHub Pages
         run: |
           npm install gh-pages --save-dev  # 安装 gh-pages
