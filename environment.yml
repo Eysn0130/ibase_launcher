@@ -7,10 +7,10 @@ dependencies:
   - pyqt6  # PyQt6 用于 GUI 开发
   - numpy  # 数学计算库
   - pandas  # 数据处理库
-  - hashlib  # 用于加密和哈希运算
   - platform  # 用于平台相关的操作（通常不需要安装）
   - requests  # 用于 HTTP 请求
   - pip  # 确保有 pip 用于安装其他依赖
   - pip:
       - pillow  # 图像处理库，用于 PyQt 中的图像操作
       - pyserial  # 用于串口通信，如果涉及硬件
+
