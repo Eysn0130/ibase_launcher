@@ -14,21 +14,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      # Step 2: 设置 Node.js 环境为 20 或更高版本
+      # Step 2: 设置 Node.js 环境
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '20'  # 使用 Node.js 20 或更高版本
+          node-version: '20'  # 设置 Node.js 版本
 
-      # Step 3: 安装依赖
+      # Step 3: 安装项目依赖
       - name: Install dependencies
         run: npm install
 
-      # Step 4: 构建前端项目
+      # Step 4: 安装 Vite
+      - name: Install Vite
+        run: npm install vite --save-dev
+
+      # Step 5: 构建前端项目
       - name: Build frontend
         run: npm run build  # 使用 Vite 构建项目
 
-      # Step 5: 部署到 GitHub Pages
+      # Step 6: 部署到 GitHub Pages
       - name: Deploy to GitHub Pages
         run: |
           npm install gh-pages --save-dev
