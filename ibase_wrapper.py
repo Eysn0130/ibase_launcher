@@ -21,7 +21,7 @@ from typing import Optional, Tuple
 
 from PyQt6.QtCore import (
     Qt, QTimer, QPoint, QPointF, QRectF, QPropertyAnimation, QEasingCurve, QProcess,
-    QSize, QEvent, pyqtSignal
+    QSize, QEvent, pyqtSignal, QVariantAnimation
 )
 from PyQt6.QtGui import (
     QFont, QFontDatabase, QPalette, QColor, QClipboard,
@@ -656,91 +656,160 @@ class TitleButton(QPushButton):
     def __init__(self, kind: str, parent=None):
         super().__init__(parent)
         self.kind = kind
-        self._hover = False
+        self._hover_progress = 0.0
+        self._press_progress = 0.0
         self._pressed = False
         self.setFixedSize(28, 28)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+        self._hover_anim = QVariantAnimation(self)
+        self._hover_anim.setDuration(180)
+        self._hover_anim.setEasingCurve(QEasingCurve.Type.InOutQuad)
+        self._hover_anim.valueChanged.connect(self._on_hover_changed)
+        self._press_anim = QVariantAnimation(self)
+        self._press_anim.setDuration(140)
+        self._press_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+        self._press_anim.valueChanged.connect(self._on_press_changed)
 
     def enterEvent(self, e):
-        self._hover = True
-        self.update()
+        self._animate_hover(1.0)
         super().enterEvent(e)
 
     def leaveEvent(self, e):
-        self._hover = False
         self._pressed = False
-        self.update()
+        self._animate_hover(0.0)
+        self._animate_press(0.0)
         super().leaveEvent(e)
 
     def mousePressEvent(self, e):
         if e.button() == Qt.MouseButton.LeftButton:
             self._pressed = True
-            self.update()
+            self._animate_press(1.0)
         super().mousePressEvent(e)
 
     def mouseReleaseEvent(self, e):
         if self._pressed:
             self._pressed = False
-            self.update()
+            self._animate_press(0.0)
         super().mouseReleaseEvent(e)
 
     def _base_color(self) -> QColor:
         if self.kind == "min":
-            return QColor(255, 185, 90)
-        return QColor(255, 98, 110)
+            return QColor(228, 234, 240)
+        return QColor(255, 92, 92)
+
+    def _button_color(self) -> QColor:
+        base = self._base_color()
+        hover = self._hover_progress
+        press = self._press_progress
+        if hover > 0.0:
+            base = base.lighter(100 + int(6 * hover))
+        if press > 0.0:
+            base = base.darker(100 + int(12 * press))
+        return base
 
     def _icon_pen(self) -> QPen:
-        pen = QPen(QColor(255, 255, 255, 235))
+        if self.kind == "min":
+            base = QColor(52, 60, 72, 230)
+        else:
+            base = QColor(255, 255, 255, 240)
+        hover = self._hover_progress
+        press = self._press_progress
+        if hover > 0.0:
+            base.setAlpha(min(255, int(base.alpha() * (1.05 + 0.2 * hover))))
+        if press > 0.0:
+            base.setAlpha(max(120, int(base.alpha() * (0.88 - 0.18 * press))))
+        pen = QPen(base)
         pen.setCapStyle(Qt.PenCapStyle.RoundCap)
         pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
-        pen.setWidthF(2.2)
+        pen.setWidthF(2.0)
         return pen
+
+    def _halo_gradient(self, center: QPointF, radius: float) -> Optional[Tuple[QRadialGradient, float]]:
+        if self._hover_progress <= 0.0:
+            return None
+        glow = QColor(self._base_color())
+        glow.setAlphaF(0.18 + 0.32 * self._hover_progress)
+        outer = QColor(20, 26, 32, 0)
+        grad = QRadialGradient(center, radius)
+        grad.setColorAt(0.0, glow)
+        grad.setColorAt(1.0, outer)
+        return grad, radius
+
+    def _animate_hover(self, target: float):
+        self._hover_anim.stop()
+        self._hover_anim.setStartValue(self._hover_progress)
+        self._hover_anim.setEndValue(max(0.0, min(1.0, target)))
+        self._hover_anim.start()
+
+    def _animate_press(self, target: float):
+        self._press_anim.stop()
+        self._press_anim.setStartValue(self._press_progress)
+        self._press_anim.setEndValue(max(0.0, min(1.0, target)))
+        self._press_anim.start()
+
+    def _on_hover_changed(self, value: float):
+        self._hover_progress = float(value)
+        self.update()
+
+    def _on_press_changed(self, value: float):
+        self._press_progress = float(value)
+        self.update()
 
     def paintEvent(self, e):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        outer = QRectF(self.rect()).adjusted(3.0, 3.0, -3.0, -3.0)
+        outer = QRectF(self.rect()).adjusted(5.0, 5.0, -5.0, -5.0)
         diameter = min(outer.width(), outer.height())
-        circle = QRectF(0.0, 0.0, diameter, diameter)
-        circle.moveCenter(outer.center())
+        outer.setWidth(diameter)
+        outer.setHeight(diameter)
+        outer.moveCenter(QPointF(self.rect().center()))
+        center = outer.center()
+        scale = 1.0 + (0.05 * self._hover_progress) - (0.1 * self._press_progress)
 
-        base = self._base_color()
-        highlight = QColor(base)
-        shadow = QColor(base)
-        if self._pressed:
-            highlight = highlight.darker(130)
-            shadow = shadow.darker(160)
-        elif self._hover:
-            highlight = highlight.lighter(145)
-            shadow = shadow.darker(130)
-        else:
-            highlight = highlight.lighter(130)
-            shadow = shadow.darker(140)
+        painter.save()
+        painter.translate(center)
+        painter.scale(scale, scale)
+        painter.translate(-center)
 
-        grad = QRadialGradient(circle.center(), diameter / 2.0)
-        grad.setColorAt(0.0, highlight)
-        grad.setColorAt(0.65, base)
-        grad.setColorAt(1.0, shadow)
+        halo = self._halo_gradient(center, outer.width() / 1.6)
+        if halo:
+            gradient, halo_radius = halo
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(gradient)
+            painter.drawEllipse(center, halo_radius, halo_radius)
 
         painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(grad)
-        painter.drawEllipse(circle)
+        painter.setBrush(self._button_color())
+        painter.drawEllipse(outer)
 
-        rim = QColor(shadow)
-        rim.setAlpha(210)
-        painter.setPen(QPen(rim, 1.1))
-        painter.setBrush(Qt.BrushStyle.NoBrush)
-        painter.drawEllipse(circle.adjusted(0.3, 0.3, -0.3, -0.3))
+        if self._hover_progress > 0.0:
+            ring = QColor(255, 255, 255, int(40 * self._hover_progress))
+            painter.setPen(QPen(ring, 1.4))
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.drawEllipse(outer.adjusted(0.5, 0.5, -0.5, -0.5))
 
         painter.setPen(self._icon_pen())
         if self.kind == "min":
-            y = circle.center().y()
-            painter.drawLine(QPointF(circle.left() + 6.5, y), QPointF(circle.right() - 6.5, y))
+            y = outer.center().y()
+            inset = 7.0
+            painter.drawLine(
+                QPointF(outer.left() + inset, y),
+                QPointF(outer.right() - inset, y)
+            )
         else:
-            painter.drawLine(QPointF(circle.left() + 6.5, circle.top() + 6.5), QPointF(circle.right() - 6.5, circle.bottom() - 6.5))
-            painter.drawLine(QPointF(circle.left() + 6.5, circle.bottom() - 6.5), QPointF(circle.right() - 6.5, circle.top() + 6.5))
+            inset = 6.5
+            painter.drawLine(
+                QPointF(outer.left() + inset, outer.top() + inset),
+                QPointF(outer.right() - inset, outer.bottom() - inset)
+            )
+            painter.drawLine(
+                QPointF(outer.left() + inset, outer.bottom() - inset),
+                QPointF(outer.right() - inset, outer.top() + inset)
+            )
+
+        painter.restore()
 
 
 class TitleBar(QWidget):
@@ -758,7 +827,9 @@ class TitleBar(QWidget):
         self.btn_x   = TitleButton("close", self)
         for btn, tip in ((self.btn_min, "最小化"), (self.btn_x, "关闭")):
             btn.setToolTip(tip)
-        row = QHBoxLayout(self); row.setContentsMargins(18, 8, 18, 6); row.setSpacing(12)
+        row = QHBoxLayout(self)
+        row.setContentsMargins(16, 7, 16, 7)
+        row.setSpacing(10)
         row.addWidget(self.lab); row.addStretch(1); row.addWidget(self.btn_min); row.addWidget(self.btn_x)
         self.btn_min.clicked.connect(parent.showMinimized); self.btn_x.clicked.connect(parent.close)
     def paintEvent(self, e):
