@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "build": "vite build",
-    "deploy": "gh-pages -d dist"
+    "build": "vite build",   // 使用 Vite 构建前端
+    "deploy": "gh-pages -d dist"  // 如果使用 GitHub Pages 部署
   }
 }
