@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint src --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "deploy": "gh-pages -d dist"  // 部署 dist 文件夹到 GitHub Pages
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "react": "^18.2.0",
@@ -22,6 +22,6 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
     "vite": "^5.2.0",
-    "gh-pages": "^3.2.3"  // 确保 gh-pages 已安装作为 devDependency
+    "gh-pages": "^3.2.3"
   }
 }
