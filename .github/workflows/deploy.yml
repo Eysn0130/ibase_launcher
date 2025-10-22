@@ -10,28 +10,21 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v2
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v2
         with:
-          node-version: 20
+          node-version: 20  # 使用 Node.js 20 版本
 
       - name: Install dependencies
-        working-directory: frontend
-        run: npm ci
+        run: npm install --prefix frontend  # 使用 npm install 生成 package-lock.json 文件
+
+      - name: Install gh-pages
+        run: npm install gh-pages --save-dev --prefix frontend  # 安装 gh-pages
 
       - name: Build the project
-        working-directory: frontend
-        run: npm run build
-
-      - name: Set up Git user
-        run: |
-          git config --global user.email "your-email@example.com"  # 配置 Git 邮箱
-          git config --global user.name "Your Name"  # 配置 Git 用户名
+        run: npm run build --prefix frontend
 
       - name: Deploy to GitHub Pages
-        working-directory: frontend
-        run: |
-          npm install gh-pages --save-dev
-          npm run deploy
+        run: npm run deploy --prefix frontend  # 使用 gh-pages 部署
