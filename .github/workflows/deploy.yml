@@ -3,7 +3,7 @@ name: Build & Deploy to GitHub Pages
 on:
   push:
     branches: [main]
-  workflow_dispatch:   # 支持手动触发
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -32,7 +32,7 @@ jobs:
 
       # 安装依赖
       - name: Install dependencies
-        run: npm install --prefix frontend  # 确保有 package-lock.json 文件
+        run: npm ci --prefix frontend  # 确保存在 package-lock.json 文件
 
       # 生成构建文件
       - name: Build (Vite)
