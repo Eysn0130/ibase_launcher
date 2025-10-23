@@ -32,7 +32,7 @@ jobs:
 
       # 安装依赖
       - name: Install dependencies
-        run: npm ci --prefix frontend  # 确保存在 package-lock.json 文件
+        run: npm ci --prefix frontend  # 确保 package-lock.json 存在并提交
 
       # 生成构建文件
       - name: Build (Vite)
