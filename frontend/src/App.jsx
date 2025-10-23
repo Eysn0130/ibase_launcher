@@ -20,8 +20,8 @@ const Shell = styled.div`
 `;
 
 const NavBar = styled.nav`
-  width: min(960px, 100%);
-  margin: 0 auto;
+  width: min(1040px, 100%);
+  margin: clamp(0.15rem, 0.9vw, 0.6rem) auto 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -147,13 +147,6 @@ const HeroTitle = styled.h1`
   color: #0b1f33;
 `;
 
-const HeroDescription = styled.p`
-  margin: 0;
-  font-size: clamp(1rem, 2.2vw, 1.2rem);
-  line-height: 1.75;
-  color: rgba(15, 23, 42, 0.68);
-  max-width: 640px;
-`;
 
 const ContentGrid = styled.div`
   display: grid;
@@ -853,9 +846,6 @@ function App() {
           ibm ibase 激活码授权
         </HeroBadge>
         <HeroTitle>iBase 激活中心</HeroTitle>
-        <HeroDescription>
-          在轻盈纯净的工作台中完成机器码、密钥与有效期的设定，快速生成精准可靠的授权编码。
-        </HeroDescription>
       </Hero>
 
       <ContentGrid>
