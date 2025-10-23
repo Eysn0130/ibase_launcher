@@ -6,7 +6,7 @@ const GlobalStyle = createGlobalStyle`
   :root {
     color-scheme: light;
     font-family: 'Inter', 'Helvetica Neue', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background-color: #0f172a;
+    background-color: #f5f7fb;
   }
 
   *, *::before, *::after {
@@ -16,16 +16,18 @@ const GlobalStyle = createGlobalStyle`
   body {
     margin: 0;
     min-height: 100vh;
+    background: linear-gradient(160deg, #f7f9fc 0%, #edf2fb 35%, #f9fafc 100%);
+    color: #0b1f33;
+    padding: clamp(0.5rem, 1.8vw, 1.4rem) clamp(0.9rem, 3vw, 2.2rem);
     display: flex;
     justify-content: center;
-    align-items: center;
-    background: radial-gradient(110% 110% at 50% 0%, rgba(90, 53, 255, 0.16) 0%, rgba(15, 23, 42, 0.95) 50%), #0f172a;
-    color: #0f172a;
-    padding: 2.5rem 1.5rem;
+    align-items: flex-start;
   }
 
   #root {
     width: 100%;
+    display: flex;
+    justify-content: center;
   }
 
   button, input, select {
