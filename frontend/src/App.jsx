@@ -156,31 +156,11 @@ const HeroDescription = styled.p`
 const ContentGrid = styled.div`
   display: grid;
   gap: clamp(2rem, 4vw, 3rem);
-  grid-template-columns: repeat(12, 1fr);
-
-  @media (max-width: 1024px) {
-    grid-template-columns: 1fr;
-  }
 `;
 
 const FormColumn = styled.div`
-  grid-column: span 7;
   display: grid;
   gap: 1.75rem;
-
-  @media (max-width: 1024px) {
-    grid-column: 1 / -1;
-  }
-`;
-
-const InfoColumn = styled.div`
-  grid-column: span 5;
-  display: grid;
-  gap: 1.25rem;
-
-  @media (max-width: 1024px) {
-    grid-column: 1 / -1;
-  }
 `;
 
 const Card = styled.section`
@@ -454,6 +434,16 @@ const ResultHeading = styled.h3`
   color: #0b1f33;
 `;
 
+const ResultCodeRow = styled.div`
+  display: grid;
+  gap: 0.75rem;
+
+  @media (min-width: 520px) {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+`;
+
 const CodeDisplay = styled.code`
   font-size: clamp(1.4rem, 3vw, 1.65rem);
   font-weight: 700;
@@ -466,6 +456,41 @@ const CodeDisplay = styled.code`
   text-align: center;
   display: block;
   box-shadow: inset 0 0 0 1px rgba(13, 148, 136, 0.24);
+`;
+
+const CopyButton = styled.button`
+  padding: 0.75rem 1.5rem;
+  border-radius: 999px;
+  border: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  background: linear-gradient(120deg, #0f766e, #0d9488);
+  color: white;
+  cursor: pointer;
+  transition: transform 200ms ease, box-shadow 200ms ease, background 220ms ease;
+  box-shadow: 0 16px 36px rgba(13, 148, 136, 0.28);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 22px 48px rgba(13, 148, 136, 0.32);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.28);
+    transform: translateY(-1px);
+  }
+`;
+
+const CopyControls = styled.div`
+  display: grid;
+  gap: 0.35rem;
+  justify-items: start;
+`;
+
+const CopyFeedback = styled.span`
+  font-size: 0.9rem;
+  color: rgba(13, 148, 136, 0.85);
 `;
 
 const DetailsList = styled.dl`
@@ -635,6 +660,7 @@ function App() {
   const [showSecret, setShowSecret] = useState(false);
   const [status, setStatus] = useState(null);
   const [activation, setActivation] = useState(null);
+  const [copyMessage, setCopyMessage] = useState(null);
 
   const minDate = useMemo(() => new Date().toISOString().split('T')[0], []);
 
@@ -739,6 +765,7 @@ function App() {
     }
 
     try {
+      setCopyMessage(null);
       const machineCodeHex = sanitizeMachineCode(formData.machineCode);
       const formattedMachineCode = formatMachineCodeSegments(machineCodeHex);
       const secretKeyValue = formData.secretKey.trim();
@@ -762,6 +789,7 @@ function App() {
       console.error('Failed to generate activation code', error);
       setStatus({ type: 'error', message: '生成激活码时出现问题，请稍后重试。' });
       setActivation(null);
+      setCopyMessage(null);
     }
   };
 
@@ -770,6 +798,21 @@ function App() {
     setErrors({});
     setStatus(null);
     setActivation(null);
+    setCopyMessage(null);
+  };
+
+  const handleCopy = async () => {
+    if (!activation?.code) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(activation.code);
+      setCopyMessage('激活码已复制到剪贴板。');
+    } catch (error) {
+      console.error('Failed to copy activation code', error);
+      setCopyMessage('复制失败，请手动复制。');
+    }
   };
 
   const activeHelper = useMemo(() => {
@@ -805,11 +848,11 @@ function App() {
       <Hero>
         <HeroBadge>
           <span aria-hidden="true">●</span>
-          精准部署 · 专业体验
+          ibm ibase 激活码授权
         </HeroBadge>
-        <HeroTitle>以苹果级体验生成安全激活码</HeroTitle>
+        <HeroTitle>iBase 激活中心</HeroTitle>
         <HeroDescription>
-          重新定义许可证发行流程：在轻盈、纯净的界面中，快速生成企业级激活码，确保每一次授权都准确无误。
+          在轻盈纯净的工作台中完成机器码、密钥与有效期的设定，快速生成精准可靠的授权编码。
         </HeroDescription>
       </Hero>
 
@@ -943,7 +986,19 @@ function App() {
               {activation && (
                 <ResultSection aria-live="polite">
                   <ResultHeading>激活码已就绪</ResultHeading>
-                  <CodeDisplay>{activation.code}</CodeDisplay>
+                  <ResultCodeRow>
+                    <CodeDisplay>{activation.code}</CodeDisplay>
+                    <CopyControls>
+                      <CopyButton type="button" onClick={handleCopy}>
+                        复制激活码
+                      </CopyButton>
+                      {copyMessage && (
+                        <CopyFeedback role="status" aria-live="polite">
+                          {copyMessage}
+                        </CopyFeedback>
+                      )}
+                    </CopyControls>
+                  </ResultCodeRow>
                   <DetailsList>
                     <DetailRow>
                       <DetailTerm>机器码</DetailTerm>
@@ -969,23 +1024,6 @@ function App() {
           </Card>
         </FormColumn>
 
-        <InfoColumn>
-          <InfoCard>
-            <InfoTitle>设计为高端、为团队而生</InfoTitle>
-            <FeatureList>
-              {featureHighlights.map((feature) => (
-                <FeatureItem key={feature.title}>
-                  <FeatureName>{feature.title}</FeatureName>
-                  <FeatureDescription>{feature.description}</FeatureDescription>
-                </FeatureItem>
-              ))}
-            </FeatureList>
-            <InfoFooter>
-              <span>支持深色模式与响应式布局，适配桌面与移动端的多场景体验。</span>
-              <span>如需高级集成服务，请通过上方按钮联系专属顾问。</span>
-            </InfoFooter>
-          </InfoCard>
-        </InfoColumn>
       </ContentGrid>
     </Shell>
   );
