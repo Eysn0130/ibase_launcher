@@ -1,60 +1,221 @@
 import { useMemo, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 
-const cardEntrance = keyframes`
+const fadeIn = keyframes`
   from {
     opacity: 0;
-    transform: translateY(24px) scale(0.98);
+    transform: translateY(24px);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
 `;
 
-const PageWrapper = styled.main`
-  width: min(880px, 100%);
-  margin: 0 auto;
+const Shell = styled.div`
+  width: min(1120px, 100%);
+  display: grid;
+  gap: clamp(2.5rem, 5vw, 4rem);
+  padding: clamp(1rem, 2vw, 2rem);
+`;
+
+const NavBar = styled.nav`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: clamp(0.85rem, 2vw, 1.4rem) clamp(1rem, 2vw, 1.5rem);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(28px);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  animation: ${fadeIn} 320ms ease-out;
+`;
+
+const NavBrand = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   color: #0f172a;
 `;
 
-const GlassCard = styled.section`
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.86), rgba(244, 245, 255, 0.78));
-  border-radius: 28px;
-  padding: clamp(2rem, 4vw, 3.5rem);
-  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
-  backdrop-filter: blur(18px);
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  animation: ${cardEntrance} 420ms ease-out;
+const BrandMark = styled.span`
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #e0e7ff 0%, #c7d2fe 50%, #a5b4fc 100%);
+  display: grid;
+  place-items: center;
+  color: #312e81;
+  font-weight: 700;
+  font-size: 0.95rem;
+`;
 
-  @media (max-width: 640px) {
-    padding: 1.75rem 1.25rem;
-    border-radius: 22px;
+const NavLinks = styled.ul`
+  display: flex;
+  align-items: center;
+  gap: clamp(1.25rem, 3vw, 2.5rem);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  @media (max-width: 860px) {
+    display: none;
   }
 `;
 
-const Header = styled.header`
-  margin-bottom: clamp(2rem, 4vw, 3rem);
+const NavLink = styled.li`
+  position: relative;
+  font-size: 0.95rem;
+  color: rgba(15, 23, 42, 0.65);
+  cursor: pointer;
+  transition: color 200ms ease;
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -0.4rem;
+    width: 100%;
+    height: 2px;
+    transform: scaleX(0);
+    transform-origin: center;
+    background: linear-gradient(90deg, #6366f1, #3b82f6);
+    transition: transform 200ms ease;
+  }
+
+  &:hover {
+    color: rgba(15, 23, 42, 0.9);
+  }
+
+  &:hover::after {
+    transform: scaleX(1);
+  }
 `;
 
-const Title = styled.h1`
-  font-size: clamp(2rem, 3.5vw, 2.85rem);
+const NavAction = styled.button`
+  padding: 0.7rem 1.6rem;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(120deg, #2563eb, #4c51bf);
+  color: white;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: transform 200ms ease, box-shadow 200ms ease;
+  box-shadow: 0 18px 40px rgba(37, 99, 235, 0.25);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 24px 52px rgba(37, 99, 235, 0.32);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.28);
+  }
+`;
+
+const Hero = styled.section`
+  display: grid;
+  gap: 1.5rem;
+  text-align: left;
+  animation: ${fadeIn} 420ms ease-out;
+`;
+
+const HeroBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.08);
+  color: #1d4ed8;
+  font-weight: 600;
+  font-size: 0.9rem;
+`;
+
+const HeroTitle = styled.h1`
+  margin: 0;
+  font-size: clamp(2.5rem, 5vw, 3.4rem);
   font-weight: 700;
   letter-spacing: -0.03em;
-  margin: 0 0 0.5rem;
-  color: #0f172a;
+  color: #0b1f33;
 `;
 
-const Subtitle = styled.p`
+const HeroDescription = styled.p`
   margin: 0;
+  font-size: clamp(1rem, 2.2vw, 1.2rem);
+  line-height: 1.75;
   color: rgba(15, 23, 42, 0.68);
-  font-size: clamp(1rem, 1.6vw, 1.15rem);
+  max-width: 640px;
+`;
+
+const ContentGrid = styled.div`
+  display: grid;
+  gap: clamp(2rem, 4vw, 3rem);
+  grid-template-columns: repeat(12, 1fr);
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const FormColumn = styled.div`
+  grid-column: span 7;
+  display: grid;
+  gap: 1.75rem;
+
+  @media (max-width: 1024px) {
+    grid-column: 1 / -1;
+  }
+`;
+
+const InfoColumn = styled.div`
+  grid-column: span 5;
+  display: grid;
+  gap: 1.25rem;
+
+  @media (max-width: 1024px) {
+    grid-column: 1 / -1;
+  }
+`;
+
+const Card = styled.section`
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 28px;
+  padding: clamp(1.8rem, 3vw, 2.75rem);
+  box-shadow: 0 28px 60px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  backdrop-filter: blur(26px);
+  animation: ${fadeIn} 460ms ease-out;
+`;
+
+const FormHeader = styled.header`
+  display: grid;
+  gap: 0.65rem;
+  margin-bottom: 1.75rem;
+`;
+
+const FormTitle = styled.h2`
+  margin: 0;
+  font-size: 1.65rem;
+  color: #0b1f33;
+  letter-spacing: -0.01em;
+`;
+
+const FormSubtitle = styled.p`
+  margin: 0;
+  font-size: 1rem;
+  color: rgba(15, 23, 42, 0.65);
   line-height: 1.6;
 `;
 
 const Form = styled.form`
   display: grid;
-  gap: clamp(1.75rem, 3vw, 2.5rem);
+  gap: clamp(1.5rem, 2.6vw, 2.2rem);
 `;
 
 const Fieldset = styled.fieldset`
@@ -62,21 +223,20 @@ const Fieldset = styled.fieldset`
   margin: 0;
   padding: 0;
   display: grid;
-  gap: clamp(1.25rem, 2vw, 1.75rem);
+  gap: clamp(1.2rem, 2vw, 1.6rem);
 `;
 
 const Legend = styled.legend`
-  font-size: 1rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  color: rgba(15, 23, 42, 0.58);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  margin-bottom: 0.5rem;
+  color: rgba(15, 23, 42, 0.48);
 `;
 
 const InputGroup = styled.div`
   display: grid;
-  gap: 0.65rem;
+  gap: 0.75rem;
 `;
 
 const LabelRow = styled.div`
@@ -85,7 +245,7 @@ const LabelRow = styled.div`
   justify-content: space-between;
   gap: 0.75rem;
 
-  @media (max-width: 600px) {
+  @media (max-width: 640px) {
     flex-direction: column;
     align-items: flex-start;
   }
@@ -94,38 +254,38 @@ const LabelRow = styled.div`
 const Label = styled.label`
   font-size: 1rem;
   font-weight: 600;
-  color: #0f172a;
+  color: rgba(15, 23, 42, 0.9);
 `;
 
 const HelperText = styled.span`
   font-size: 0.9rem;
-  color: rgba(79, 70, 229, 0.85);
+  color: rgba(37, 99, 235, 0.82);
 `;
 
 const TextInput = styled.input`
   width: 100%;
-  padding: 0.95rem 1.05rem;
-  border-radius: 16px;
+  padding: 1rem 1.1rem;
+  border-radius: 18px;
   border: 1.5px solid rgba(148, 163, 184, 0.4);
   background: rgba(255, 255, 255, 0.92);
   color: #0f172a;
   font-size: 1rem;
-  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 
   &:hover {
-    border-color: rgba(99, 102, 241, 0.55);
+    border-color: rgba(37, 99, 235, 0.5);
   }
 
   &:focus-visible {
     outline: none;
-    border-color: rgba(99, 102, 241, 0.75);
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+    border-color: rgba(37, 99, 235, 0.72);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.18);
     transform: translateY(-1px);
   }
 
   &[aria-invalid='true'] {
     border-color: rgba(220, 38, 38, 0.7);
-    box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.35);
+    box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.3);
   }
 `;
 
@@ -135,45 +295,45 @@ const PasswordInputWrapper = styled.div`
 
 const ToggleSecretButton = styled.button`
   position: absolute;
-  right: 0.8rem;
+  right: 0.85rem;
   top: 50%;
   transform: translateY(-50%);
   border: none;
-  background: none;
-  color: rgba(79, 70, 229, 0.9);
+  background: rgba(37, 99, 235, 0.08);
+  color: #1d4ed8;
   cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 10px;
-  transition: background 160ms ease;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  transition: background 160ms ease, color 160ms ease;
 
   &:hover {
-    background: rgba(99, 102, 241, 0.12);
+    background: rgba(37, 99, 235, 0.14);
   }
 
   &:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.35);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.28);
   }
 `;
 
 const Select = styled.select`
   width: 100%;
-  padding: 0.95rem 1.05rem;
-  border-radius: 16px;
+  padding: 1rem 1.1rem;
+  border-radius: 18px;
   border: 1.5px solid rgba(148, 163, 184, 0.4);
   background: rgba(255, 255, 255, 0.92);
   color: #0f172a;
   font-size: 1rem;
-  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 
   &:hover {
-    border-color: rgba(99, 102, 241, 0.55);
+    border-color: rgba(37, 99, 235, 0.5);
   }
 
   &:focus-visible {
     outline: none;
-    border-color: rgba(99, 102, 241, 0.75);
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+    border-color: rgba(37, 99, 235, 0.72);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.18);
     transform: translateY(-1px);
   }
 `;
@@ -184,12 +344,12 @@ const HelperPanel = styled.div`
   gap: 0.85rem;
   font-size: 0.92rem;
   color: rgba(15, 23, 42, 0.7);
-  background: rgba(99, 102, 241, 0.08);
-  border-radius: 14px;
-  padding: 0.85rem 1rem;
+  background: rgba(37, 99, 235, 0.08);
+  border-radius: 16px;
+  padding: 0.9rem 1.1rem;
   line-height: 1.5;
 
-  @media (max-width: 600px) {
+  @media (max-width: 640px) {
     flex-direction: column;
     align-items: flex-start;
   }
@@ -197,12 +357,12 @@ const HelperPanel = styled.div`
 
 const Accent = styled.span`
   font-weight: 600;
-  color: #4f46e5;
+  color: #2563eb;
 `;
 
 const ErrorMessage = styled.span`
   color: #dc2626;
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   line-height: 1.4;
 `;
 
@@ -212,56 +372,56 @@ const ButtonRow = styled.div`
   gap: 1rem;
   justify-content: flex-end;
 
-  @media (max-width: 600px) {
+  @media (max-width: 640px) {
     flex-direction: column;
     align-items: stretch;
   }
 `;
 
 const Button = styled.button`
-  min-width: 150px;
-  padding: 0.9rem 1.8rem;
+  min-width: 160px;
+  padding: 0.95rem 1.9rem;
   border-radius: 999px;
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
   border: none;
-  transition: transform 180ms ease, box-shadow 180ms ease, background 200ms ease;
+  transition: transform 200ms ease, box-shadow 200ms ease, background 220ms ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
-  box-shadow: 0 18px 36px rgba(79, 70, 229, 0.18);
+  gap: 0.45rem;
 
   &:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.35);
-    transform: translateY(-1px) scale(0.99);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.28);
+    transform: translateY(-1px);
   }
 
-  @media (max-width: 600px) {
+  @media (max-width: 640px) {
     width: 100%;
   }
 `;
 
 const PrimaryButton = styled(Button)`
-  background: linear-gradient(120deg, #6366f1, #8b5cf6 48%, #a855f7);
+  background: linear-gradient(120deg, #2563eb, #4338ca);
   color: white;
+  box-shadow: 0 22px 48px rgba(37, 99, 235, 0.24);
 
   &:hover {
-    transform: translateY(-2px) scale(1.01);
-    box-shadow: 0 18px 36px rgba(99, 102, 241, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 30px 60px rgba(37, 99, 235, 0.32);
   }
 `;
 
 const SecondaryButton = styled(Button)`
-  background: rgba(255, 255, 255, 0.8);
-  color: #4f46e5;
-  border: 1.5px solid rgba(99, 102, 241, 0.25);
-  box-shadow: 0 16px 30px rgba(99, 102, 241, 0.14);
+  background: rgba(255, 255, 255, 0.88);
+  color: #1d4ed8;
+  border: 1.5px solid rgba(37, 99, 235, 0.16);
+  box-shadow: 0 22px 44px rgba(15, 23, 42, 0.08);
 
   &:hover {
-    transform: translateY(-2px) scale(1.01);
+    transform: translateY(-2px);
     background: rgba(255, 255, 255, 0.95);
   }
 `;
@@ -269,45 +429,43 @@ const SecondaryButton = styled(Button)`
 const StatusMessage = styled.p`
   margin: 0;
   font-size: 0.95rem;
-  color: ${(props) => (props.$status === 'success' ? '#15803d' : '#dc2626')};
+  color: ${(props) => (props.$status === 'success' ? '#166534' : '#b91c1c')};
   background: ${(props) =>
-    props.$status === 'success'
-      ? 'rgba(34, 197, 94, 0.12)'
-      : 'rgba(248, 113, 113, 0.15)'};
+    props.$status === 'success' ? 'rgba(34, 197, 94, 0.14)' : 'rgba(248, 113, 113, 0.16)'};
   border: 1px solid
-    ${(props) => (props.$status === 'success' ? 'rgba(34, 197, 94, 0.3)' : 'rgba(248, 113, 113, 0.35)')};
-  padding: 0.85rem 1rem;
-  border-radius: 14px;
+    ${(props) => (props.$status === 'success' ? 'rgba(34, 197, 94, 0.28)' : 'rgba(248, 113, 113, 0.32)')};
+  padding: 0.9rem 1.1rem;
+  border-radius: 16px;
 `;
 
 const ResultSection = styled.section`
   display: grid;
   gap: 1.1rem;
-  background: rgba(14, 116, 144, 0.07);
+  background: rgba(13, 148, 136, 0.08);
   border: 1px solid rgba(13, 148, 136, 0.24);
-  border-radius: 18px;
+  border-radius: 20px;
   padding: clamp(1.5rem, 3vw, 2rem);
 `;
 
-const ResultHeading = styled.h2`
+const ResultHeading = styled.h3`
   margin: 0;
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   font-weight: 700;
-  color: #0f172a;
+  color: #0b1f33;
 `;
 
 const CodeDisplay = styled.code`
-  font-size: clamp(1.35rem, 3vw, 1.65rem);
+  font-size: clamp(1.4rem, 3vw, 1.65rem);
   font-weight: 700;
-  letter-spacing: 0.28em;
+  letter-spacing: 0.25em;
   text-transform: uppercase;
-  background: rgba(15, 118, 110, 0.16);
+  background: rgba(13, 148, 136, 0.16);
   color: #0f766e;
-  border-radius: 14px;
-  padding: 0.9rem 1.2rem;
+  border-radius: 16px;
+  padding: 1rem 1.3rem;
   text-align: center;
   display: block;
-  box-shadow: inset 0 0 0 1px rgba(13, 148, 136, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(13, 148, 136, 0.24);
 `;
 
 const DetailsList = styled.dl`
@@ -318,7 +476,7 @@ const DetailsList = styled.dl`
 
 const DetailRow = styled.div`
   display: grid;
-  gap: 0.35rem;
+  gap: 0.4rem;
   align-items: baseline;
 
   @media (min-width: 640px) {
@@ -329,15 +487,58 @@ const DetailRow = styled.div`
 
 const DetailTerm = styled.dt`
   font-weight: 600;
-  color: rgba(15, 23, 42, 0.72);
+  color: rgba(15, 23, 42, 0.7);
 `;
 
 const DetailDescription = styled.dd`
   margin: 0;
   font-family: 'JetBrains Mono', 'Fira Code', 'SFMono-Regular', Menlo, Monaco, Consolas,
     'Liberation Mono', 'Courier New', monospace;
-  color: rgba(15, 23, 42, 0.85);
+  color: rgba(15, 23, 42, 0.8);
   word-break: break-word;
+`;
+
+const InfoCard = styled(Card)`
+  background: rgba(255, 255, 255, 0.86);
+  display: grid;
+  gap: 1.5rem;
+`;
+
+const InfoTitle = styled.h3`
+  margin: 0;
+  font-size: 1.3rem;
+  color: #0b1f33;
+`;
+
+const FeatureList = styled.ul`
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1.1rem;
+`;
+
+const FeatureItem = styled.li`
+  display: grid;
+  gap: 0.4rem;
+`;
+
+const FeatureName = styled.span`
+  font-weight: 600;
+  color: rgba(15, 23, 42, 0.85);
+`;
+
+const FeatureDescription = styled.span`
+  font-size: 0.95rem;
+  color: rgba(15, 23, 42, 0.6);
+  line-height: 1.6;
+`;
+
+const InfoFooter = styled.div`
+  display: grid;
+  gap: 0.5rem;
+  font-size: 0.92rem;
+  color: rgba(15, 23, 42, 0.6);
 `;
 
 const VisuallyHidden = styled.span`
@@ -413,6 +614,21 @@ const deriveActivationCode = async (machineCodeHex, secretKey, expiryToken) => {
   return formatActivationCode(fallback);
 };
 
+const featureHighlights = [
+  {
+    title: '精准授权策略',
+    description: '按需定义有效期与密钥策略，保障企业级分发的灵活性与安全性。',
+  },
+  {
+    title: '即时反馈体验',
+    description: '流畅的交互与视觉回馈，让激活流程保持优雅且高效。',
+  },
+  {
+    title: '审计级记录',
+    description: '生成历史一目了然，便于团队追踪每一次授权变更。',
+  },
+];
+
 function App() {
   const [formData, setFormData] = useState(initialFormState);
   const [errors, setErrors] = useState({});
@@ -444,95 +660,78 @@ function App() {
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-    const nextValue = name === 'machineCode' ? value.toUpperCase() : value;
-    const updatedFormData = {
-      ...formData,
-      [name]: nextValue,
-    };
+    const nextValue =
+      name === 'machineCode'
+        ? formatMachineCodeSegments(sanitizeMachineCode(value))
+        : value;
 
-    if (name === 'expiryOption' && value !== 'custom') {
-      updatedFormData.customDate = '';
+    const nextData = { ...formData, [name]: nextValue };
+    setFormData(nextData);
+
+    if (errors[name]) {
+      const validationError = validateField(name, nextValue, nextData);
+      setErrors((prev) => ({ ...prev, [name]: validationError }));
     }
-
-    setFormData(updatedFormData);
-
-    setErrors((prev) => {
-      const nextErrors = {
-        ...prev,
-        [name]: validateField(name, nextValue, updatedFormData),
-      };
-
-      if (name === 'expiryOption' && value !== 'custom') {
-        nextErrors.customDate = '';
-      }
-
-      return nextErrors;
-    });
-
-    setStatus(null);
   };
 
   const handleBlur = (event) => {
     const { name, value } = event.target;
-    setErrors((prev) => ({
-      ...prev,
-      [name]: validateField(name, value, formData),
-    }));
-  };
-
-  const validateForm = () => {
-    const nextErrors = {
-      machineCode: validateField('machineCode', formData.machineCode, formData),
-      secretKey: validateField('secretKey', formData.secretKey, formData),
-      customDate: validateField('customDate', formData.customDate, formData),
-    };
-
-    const filteredErrors = Object.fromEntries(
-      Object.entries(nextErrors).filter(([, message]) => Boolean(message))
-    );
-
-    setErrors(filteredErrors);
-    return Object.keys(filteredErrors).length === 0;
+    const validationError = validateField(name, value);
+    if (validationError) {
+      setErrors((prev) => ({ ...prev, [name]: validationError }));
+    } else {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[name];
+        return next;
+      });
+    }
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (!validateForm()) {
-      setStatus({ type: 'error', message: '表单存在错误，请检查红色提示后重新提交。' });
+
+    const validationResults = Object.entries(formData).reduce((acc, [field, fieldValue]) => {
+      const error = validateField(field, fieldValue);
+      if (error) {
+        acc[field] = error;
+      }
+      return acc;
+    }, {});
+
+    if (Object.keys(validationResults).length) {
+      setErrors(validationResults);
+      setStatus({ type: 'error', message: '请检查表单信息，确保所有字段均已正确填写。' });
       setActivation(null);
       return;
     }
 
     const now = new Date();
-    let expiresOnLabel = '永久有效';
-    let expiryToken = 'PERMANENT';
-    let resolvedDate = null;
+    let expiryToken = 'permanent';
+    let resolvedDate = '';
+    let expiresOnLabel = '永久有效（无固定日期）';
 
     switch (formData.expiryOption) {
       case 'year': {
         const next = new Date(now);
-        next.setFullYear(next.getFullYear() + 1);
-        expiresOnLabel = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(
-          next.getDate()
-        ).padStart(2, '0')} (一年有效)`;
+        next.setDate(next.getDate() + 365);
         resolvedDate = next.toISOString().split('T')[0];
         expiryToken = resolvedDate;
+        expiresOnLabel = `${resolvedDate} (一年有效)`;
         break;
       }
       case 'day': {
         const next = new Date(now);
         next.setDate(next.getDate() + 1);
-        expiresOnLabel = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(
-          next.getDate()
-        ).padStart(2, '0')} (一天有效)`;
         resolvedDate = next.toISOString().split('T')[0];
         expiryToken = resolvedDate;
+        expiresOnLabel = `${resolvedDate} (一天有效)`;
         break;
       }
       case 'custom': {
-        expiresOnLabel = `${formData.customDate} (指定日期)`;
-        expiryToken = formData.customDate;
         resolvedDate = formData.customDate;
+        expiryToken = formData.customDate;
+        expiresOnLabel = `${formData.customDate} (指定日期)`;
         break;
       }
       default:
@@ -589,167 +788,206 @@ function App() {
   }, [formData.expiryOption]);
 
   return (
-    <PageWrapper>
-      <GlassCard aria-labelledby="license-config-title">
-        <Header>
-          <Title id="license-config-title">许可证配置面板</Title>
-          <Subtitle>
-            输入机器码与 SECRET_KEY，选择到期策略，打造符合现代安全标准的激活体验。
-          </Subtitle>
-        </Header>
-        <Form onSubmit={handleSubmit} noValidate>
-          <Fieldset>
-            <Legend>基础信息</Legend>
-            <InputGroup>
-              <LabelRow>
-                <Label htmlFor="machineCode">机器码</Label>
-                <HelperText>示例：D977-B6F1-7EE3-1675</HelperText>
-              </LabelRow>
-              <TextInput
-                id="machineCode"
-                name="machineCode"
-                type="text"
-                placeholder="XXXX-XXXX-XXXX-XXXX"
-                inputMode="text"
-                value={formData.machineCode}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                aria-describedby={errors.machineCode ? 'machineCode-error' : undefined}
-                aria-invalid={Boolean(errors.machineCode)}
-                required
-                autoComplete="off"
-              />
-              {errors.machineCode && (
-                <ErrorMessage id="machineCode-error" role="alert">
-                  {errors.machineCode}
-                </ErrorMessage>
-              )}
-            </InputGroup>
-            <InputGroup>
-              <Label htmlFor="secretKey">SECRET_KEY</Label>
-              <PasswordInputWrapper>
-                <TextInput
-                  id="secretKey"
-                  name="secretKey"
-                  type={showSecret ? 'text' : 'password'}
-                  placeholder="输入密钥"
-                  value={formData.secretKey}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  aria-describedby={errors.secretKey ? 'secretKey-error' : undefined}
-                  aria-invalid={Boolean(errors.secretKey)}
-                  autoComplete="new-password"
-                  required
-                />
-                <ToggleSecretButton
-                  type="button"
-                  onClick={() => setShowSecret((prev) => !prev)}
-                  aria-pressed={showSecret}
-                  aria-label={showSecret ? '隐藏密钥' : '显示密钥'}
-                >
-                  {showSecret ? '🙈' : '👁️'}
-                </ToggleSecretButton>
-              </PasswordInputWrapper>
-              {errors.secretKey && (
-                <ErrorMessage id="secretKey-error" role="alert">
-                  {errors.secretKey}
-                </ErrorMessage>
-              )}
-            </InputGroup>
-          </Fieldset>
+    <Shell>
+      <NavBar>
+        <NavBrand>
+          <BrandMark>IB</BrandMark>
+          iBase Activation Studio
+        </NavBrand>
+        <NavLinks>
+          {['产品简介', '激活中心', '支持服务', '版本日志'].map((item) => (
+            <NavLink key={item}>{item}</NavLink>
+          ))}
+        </NavLinks>
+        <NavAction type="button">联系我们</NavAction>
+      </NavBar>
 
-          <Fieldset>
-            <Legend>到期时间</Legend>
-            <InputGroup>
-              <Label htmlFor="expiryOption">到期策略</Label>
-              <Select
-                id="expiryOption"
-                name="expiryOption"
-                value={formData.expiryOption}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                aria-describedby="expiry-helper"
-              >
-                {expiryOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </Select>
-              <HelperPanel id="expiry-helper">
-                <Accent>提示</Accent>
-                <span>{activeHelper}</span>
-              </HelperPanel>
-            </InputGroup>
-            {formData.expiryOption === 'custom' && (
-              <InputGroup>
-                <Label htmlFor="customDate">指定到期日期</Label>
-                <TextInput
-                  id="customDate"
-                  name="customDate"
-                  type="date"
-                  min={minDate}
-                  value={formData.customDate}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  aria-describedby={errors.customDate ? 'customDate-error' : undefined}
-                  aria-invalid={Boolean(errors.customDate)}
-                  required
-                />
-                {errors.customDate && (
-                  <ErrorMessage id="customDate-error" role="alert">
-                    {errors.customDate}
-                  </ErrorMessage>
+      <Hero>
+        <HeroBadge>
+          <span aria-hidden="true">●</span>
+          精准部署 · 专业体验
+        </HeroBadge>
+        <HeroTitle>以苹果级体验生成安全激活码</HeroTitle>
+        <HeroDescription>
+          重新定义许可证发行流程：在轻盈、纯净的界面中，快速生成企业级激活码，确保每一次授权都准确无误。
+        </HeroDescription>
+      </Hero>
+
+      <ContentGrid>
+        <FormColumn>
+          <Card aria-labelledby="license-config-title">
+            <FormHeader>
+              <FormTitle id="license-config-title">激活参数配置</FormTitle>
+              <FormSubtitle>
+                输入机器码与 SECRET_KEY，灵活选择有效期策略。每一步操作都将实时反馈，保障授权流程的透明与可靠。
+              </FormSubtitle>
+            </FormHeader>
+            <Form onSubmit={handleSubmit} noValidate>
+              <Fieldset>
+                <Legend>基础信息</Legend>
+                <InputGroup>
+                  <LabelRow>
+                    <Label htmlFor="machineCode">机器码</Label>
+                    <HelperText>示例：D977-B6F1-7EE3-1675</HelperText>
+                  </LabelRow>
+                  <TextInput
+                    id="machineCode"
+                    name="machineCode"
+                    type="text"
+                    placeholder="XXXX-XXXX-XXXX-XXXX"
+                    inputMode="text"
+                    value={formData.machineCode}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    aria-describedby={errors.machineCode ? 'machineCode-error' : undefined}
+                    aria-invalid={Boolean(errors.machineCode)}
+                    required
+                    autoComplete="off"
+                  />
+                  {errors.machineCode && (
+                    <ErrorMessage id="machineCode-error" role="alert">
+                      {errors.machineCode}
+                    </ErrorMessage>
+                  )}
+                </InputGroup>
+                <InputGroup>
+                  <Label htmlFor="secretKey">SECRET_KEY</Label>
+                  <PasswordInputWrapper>
+                    <TextInput
+                      id="secretKey"
+                      name="secretKey"
+                      type={showSecret ? 'text' : 'password'}
+                      placeholder="输入密钥"
+                      value={formData.secretKey}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      aria-describedby={errors.secretKey ? 'secretKey-error' : undefined}
+                      aria-invalid={Boolean(errors.secretKey)}
+                      required
+                    />
+                    <ToggleSecretButton
+                      type="button"
+                      onClick={() => setShowSecret((prev) => !prev)}
+                      aria-label={showSecret ? '隐藏 SECRET_KEY' : '显示 SECRET_KEY'}
+                    >
+                      {showSecret ? '隐藏' : '显示'}
+                    </ToggleSecretButton>
+                  </PasswordInputWrapper>
+                  {errors.secretKey && (
+                    <ErrorMessage id="secretKey-error" role="alert">
+                      {errors.secretKey}
+                    </ErrorMessage>
+                  )}
+                </InputGroup>
+              </Fieldset>
+
+              <Fieldset>
+                <Legend>到期策略</Legend>
+                <InputGroup>
+                  <Label htmlFor="expiryOption">到期类型</Label>
+                  <Select
+                    id="expiryOption"
+                    name="expiryOption"
+                    value={formData.expiryOption}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                  >
+                    {expiryOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </Select>
+                </InputGroup>
+                {formData.expiryOption === 'custom' && (
+                  <InputGroup>
+                    <Label htmlFor="customDate">选择到期日期</Label>
+                    <TextInput
+                      id="customDate"
+                      name="customDate"
+                      type="date"
+                      min={minDate}
+                      value={formData.customDate}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      aria-describedby={errors.customDate ? 'customDate-error' : undefined}
+                      aria-invalid={Boolean(errors.customDate)}
+                      required
+                    />
+                    {errors.customDate && (
+                      <ErrorMessage id="customDate-error" role="alert">
+                        {errors.customDate}
+                      </ErrorMessage>
+                    )}
+                  </InputGroup>
                 )}
-              </InputGroup>
-            )}
-          </Fieldset>
+                <HelperPanel>
+                  <Accent>提示：</Accent>
+                  <span>{activeHelper}</span>
+                </HelperPanel>
+              </Fieldset>
 
-          {status && (
-            <StatusMessage $status={status.type} role="status" aria-live="polite">
-              <VisuallyHidden>{status.type === 'success' ? '成功：' : '错误：'}</VisuallyHidden>
-              {status.message}
-            </StatusMessage>
-          )}
+              <ButtonRow>
+                <SecondaryButton type="button" onClick={handleReset}>
+                  重置
+                </SecondaryButton>
+                <PrimaryButton type="submit">生成激活码</PrimaryButton>
+              </ButtonRow>
 
-          {activation && (
-            <ResultSection aria-live="polite">
-              <ResultHeading>激活信息</ResultHeading>
-              <CodeDisplay>{activation.code}</CodeDisplay>
-              <DetailsList>
-                <DetailRow>
-                  <DetailTerm>机器码</DetailTerm>
-                  <DetailDescription>{activation.machineCode}</DetailDescription>
-                </DetailRow>
-                <DetailRow>
-                  <DetailTerm>SECRET_KEY</DetailTerm>
-                  <DetailDescription>{activation.secretKey}</DetailDescription>
-                </DetailRow>
-                <DetailRow>
-                  <DetailTerm>有效期</DetailTerm>
-                  <DetailDescription>{activation.expiryLabel}</DetailDescription>
-                </DetailRow>
-                {activation.expiresOn && (
-                  <DetailRow>
-                    <DetailTerm>到期日期</DetailTerm>
-                    <DetailDescription>{activation.expiresOn}</DetailDescription>
-                  </DetailRow>
-                )}
-              </DetailsList>
-            </ResultSection>
-          )}
+              {status && (
+                <StatusMessage role="status" $status={status.type}>
+                  {status.message}
+                </StatusMessage>
+              )}
 
-          <ButtonRow>
-            <SecondaryButton type="button" onClick={handleReset}>
-              取消
-            </SecondaryButton>
-            <PrimaryButton type="submit">
-              确认
-            </PrimaryButton>
-          </ButtonRow>
-        </Form>
-      </GlassCard>
-    </PageWrapper>
+              {activation && (
+                <ResultSection aria-live="polite">
+                  <ResultHeading>激活码已就绪</ResultHeading>
+                  <CodeDisplay>{activation.code}</CodeDisplay>
+                  <DetailsList>
+                    <DetailRow>
+                      <DetailTerm>机器码</DetailTerm>
+                      <DetailDescription>{activation.machineCode}</DetailDescription>
+                    </DetailRow>
+                    <DetailRow>
+                      <DetailTerm>SECRET_KEY</DetailTerm>
+                      <DetailDescription>
+                        <VisuallyHidden>密钥</VisuallyHidden>
+                        {activation.secretKey}
+                      </DetailDescription>
+                    </DetailRow>
+                    <DetailRow>
+                      <DetailTerm>到期信息</DetailTerm>
+                      <DetailDescription>
+                        {activation.expiresOn ? activation.expiryLabel : '永久有效'}
+                      </DetailDescription>
+                    </DetailRow>
+                  </DetailsList>
+                </ResultSection>
+              )}
+            </Form>
+          </Card>
+        </FormColumn>
+
+        <InfoColumn>
+          <InfoCard>
+            <InfoTitle>设计为高端、为团队而生</InfoTitle>
+            <FeatureList>
+              {featureHighlights.map((feature) => (
+                <FeatureItem key={feature.title}>
+                  <FeatureName>{feature.title}</FeatureName>
+                  <FeatureDescription>{feature.description}</FeatureDescription>
+                </FeatureItem>
+              ))}
+            </FeatureList>
+            <InfoFooter>
+              <span>支持深色模式与响应式布局，适配桌面与移动端的多场景体验。</span>
+              <span>如需高级集成服务，请通过上方按钮联系专属顾问。</span>
+            </InfoFooter>
+          </InfoCard>
+        </InfoColumn>
+      </ContentGrid>
+    </Shell>
   );
 }
 
