@@ -1,11 +1,11 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+// https://vitejs.dev/config/
 export default defineConfig({
-  // 不要再写 root
+  base: '/ibase_wrapper.py/',  // GitHub Pages 部署的路径，确保与你的仓库名称一致
   plugins: [react()],
   build: {
-    outDir: 'dist',       // 输出到 frontend/dist
-    emptyOutDir: true
+    outDir: 'dist',  // 构建输出目录
   }
 })
