@@ -15,18 +15,18 @@ const fadeIn = keyframes`
 const Shell = styled.div`
   width: min(1120px, 100%);
   display: grid;
-  gap: clamp(1.8rem, 4vw, 3rem);
-  padding: clamp(0.5rem, 2vw, 1.75rem);
+  gap: clamp(1.6rem, 3.6vw, 2.8rem);
+  padding: clamp(0.4rem, 1.6vw, 1.5rem);
 `;
 
 const NavBar = styled.nav`
-  width: min(1040px, 100%);
-  margin: clamp(0.15rem, 0.9vw, 0.6rem) auto 0;
+  width: min(1000px, 100%);
+  margin: clamp(0.05rem, 0.6vw, 0.35rem) auto 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: clamp(0.7rem, 1.6vw, 1.2rem) clamp(0.9rem, 2vw, 1.4rem);
-  border-radius: 20px;
+  padding: clamp(0.5rem, 1.2vw, 0.9rem) clamp(0.85rem, 1.9vw, 1.3rem);
+  border-radius: 18px;
   background: rgba(255, 255, 255, 0.82);
   box-shadow: 0 24px 48px rgba(15, 23, 42, 0.08);
   backdrop-filter: blur(28px);
@@ -38,27 +38,28 @@ const NavBrand = styled.div`
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-weight: 500;
+  letter-spacing: 0.015em;
   color: #0f172a;
+  font-size: 0.95rem;
 `;
 
 const BrandMark = styled.span`
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
   background: linear-gradient(145deg, #e0e7ff 0%, #c7d2fe 50%, #a5b4fc 100%);
   display: grid;
   place-items: center;
   color: #312e81;
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.88rem;
 `;
 
 const NavLinks = styled.ul`
   display: flex;
   align-items: center;
-  gap: clamp(1.25rem, 3vw, 2.5rem);
+  gap: clamp(1.1rem, 2.6vw, 2.1rem);
   list-style: none;
   margin: 0;
   padding: 0;
@@ -70,8 +71,8 @@ const NavLinks = styled.ul`
 
 const NavLink = styled.li`
   position: relative;
-  font-size: 0.95rem;
-  color: rgba(15, 23, 42, 0.65);
+  font-size: 0.9rem;
+  color: rgba(15, 23, 42, 0.6);
   cursor: pointer;
   transition: color 200ms ease;
 
@@ -98,7 +99,7 @@ const NavLink = styled.li`
 `;
 
 const NavAction = styled.button`
-  padding: 0.7rem 1.6rem;
+  padding: 0.6rem 1.55rem;
   border-radius: 999px;
   border: none;
   background: linear-gradient(120deg, #2563eb, #4c51bf);
