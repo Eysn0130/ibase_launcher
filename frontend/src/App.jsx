@@ -18,69 +18,72 @@ const Shell = styled.div`
   width: 100%;
   display: grid;
   gap: clamp(1rem, 2vw, 1.6rem);
-  padding: clamp(0.2rem, 0.8vw, 0.6rem) clamp(0.3rem, 1vw, 0.85rem);
-  justify-items: center;
 `;
 
 const Header = styled.header`
   position: sticky;
-  top: 8px;
+  top: 0;
   z-index: 50;
-  background: #ffffff;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
   width: 100%;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
 `;
 
 const Bar = styled.div`
-  height: 64px;
-  margin: 0 auto;
-  width: min(1120px, 95%);
+  height: 72px;
+  width: 100%;
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 20px;
+  padding: 0 clamp(1.25rem, 4vw, 3rem);
 
   @media (max-width: 720px) {
-    grid-template-columns: auto 1fr;
-    height: 56px;
-    gap: 16px;
+    grid-template-columns: auto auto;
+    height: 62px;
+    gap: 12px;
+    padding: 0 clamp(0.75rem, 6vw, 1.6rem);
   }
 `;
 
 const Brand = styled.div`
   display: grid;
   grid-auto-flow: column;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
 
   .logo {
-    width: 24px;
-    height: 24px;
-    border-radius: 10px;
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
     background: linear-gradient(135deg, #6c47ff, #7b57ff);
     color: #ffffff;
     display: grid;
     place-items: center;
     font-weight: 700;
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     letter-spacing: -0.02em;
+    box-shadow: 0 10px 24px rgba(108, 71, 255, 0.28);
   }
 
   .tt {
     line-height: 1.1;
     display: grid;
-    gap: 2px;
+    gap: 1px;
   }
 
   .title {
-    font-size: 15.5px;
+    font-size: 16.5px;
     font-weight: 600;
     color: #0f172a;
   }
 
   .sub {
-    font-size: 12px;
-    color: #8a90a2;
+    font-size: 12.5px;
+    color: #5c6274;
   }
 `;
 
@@ -132,8 +135,11 @@ const CTA = styled.button`
 
 const MainContent = styled.main`
   width: min(1120px, 100%);
+  margin: 0 auto;
   display: grid;
   gap: clamp(1.2rem, 2.4vw, 2rem);
+  padding: 0 clamp(1rem, 4vw, 2.4rem) clamp(2.4rem, 4vw, 3rem);
+  box-sizing: border-box;
 `;
 
 const Hero = styled.section`

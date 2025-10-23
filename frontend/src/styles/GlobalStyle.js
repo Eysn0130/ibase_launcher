@@ -18,7 +18,7 @@ const GlobalStyle = createGlobalStyle`
     min-height: 100vh;
     background: linear-gradient(180deg, #f2f4ff 0%, #ffffff 55%, #ffffff 100%);
     color: #0b1f33;
-    padding: 8px clamp(16px, 3vw, 24px);
+    padding: 0;
     display: flex;
     justify-content: center;
     align-items: flex-start;
