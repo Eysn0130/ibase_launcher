@@ -29,14 +29,17 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
 
       # 安装依赖
       - name: Install dependencies
-        run: npm ci --prefix frontend  # 确保 package-lock.json 存在并提交
+        working-directory: frontend
+        run: npm ci
 
       # 生成构建文件
       - name: Build (Vite)
-        run: npm run build --prefix frontend
+        working-directory: frontend
+        run: npm run build
 
       # 上传构建产物到 GitHub Pages
       - name: Upload Pages artifact
