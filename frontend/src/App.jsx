@@ -1,209 +1,261 @@
 import { useMemo, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 
-const cardEntrance = keyframes`
+const fadeInUp = keyframes`
   from {
     opacity: 0;
-    transform: translateY(24px) scale(0.98);
+    transform: translateY(28px);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
 `;
 
-const PageWrapper = styled.main`
-  width: min(880px, 100%);
-  margin: 0 auto;
-  color: #0f172a;
+const Canvas = styled.main`
+  width: min(1200px, 100%);
+  display: grid;
+  gap: clamp(2.5rem, 6vw, 4rem);
+  color: #0b1120;
 `;
 
-const GlassCard = styled.section`
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.86), rgba(244, 245, 255, 0.78));
-  border-radius: 28px;
-  padding: clamp(2rem, 4vw, 3.5rem);
-  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
+const Navigation = styled.nav`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: clamp(0.75rem, 2vw, 1.2rem) clamp(1rem, 2vw, 1.5rem);
+  background: rgba(255, 255, 255, 0.75);
+  border-radius: 24px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
   backdrop-filter: blur(18px);
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  animation: ${cardEntrance} 420ms ease-out;
+  animation: ${fadeInUp} 420ms ease-out;
+`;
 
-  @media (max-width: 640px) {
-    padding: 1.75rem 1.25rem;
-    border-radius: 22px;
+const Brand = styled.div`
+  font-weight: 600;
+  font-size: clamp(1.05rem, 3vw, 1.3rem);
+  letter-spacing: 0.02em;
+`;
+
+const NavGroup = styled.div`
+  display: flex;
+  align-items: center;
+  gap: clamp(0.75rem, 2vw, 1.5rem);
+`;
+
+const NavItem = styled.a`
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: rgba(15, 23, 42, 0.65);
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  transition: color 200ms ease, background 200ms ease, transform 220ms ease;
+
+  &:hover,
+  &:focus-visible {
+    color: rgba(15, 23, 42, 0.88);
+    background: rgba(37, 99, 235, 0.1);
+    transform: translateY(-1px);
+    outline: none;
   }
 `;
 
-const Header = styled.header`
-  margin-bottom: clamp(2rem, 4vw, 3rem);
+const Hero = styled.section`
+  display: grid;
+  gap: clamp(1.25rem, 3vw, 1.9rem);
+  padding: clamp(0.5rem, 3vw, 1rem) clamp(1rem, 4vw, 1.75rem) 0;
+  animation: ${fadeInUp} 520ms ease-out;
 `;
 
-const Title = styled.h1`
-  font-size: clamp(2rem, 3.5vw, 2.85rem);
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  margin: 0 0 0.5rem;
-  color: #0f172a;
-`;
-
-const Subtitle = styled.p`
+const HeroTitle = styled.h1`
   margin: 0;
-  color: rgba(15, 23, 42, 0.68);
-  font-size: clamp(1rem, 1.6vw, 1.15rem);
+  font-size: clamp(2.4rem, 5vw, 3.2rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: #020617;
+`;
+
+const HeroSubtitle = styled.p`
+  margin: 0;
+  max-width: 720px;
+  font-size: clamp(1.05rem, 2.5vw, 1.2rem);
+  line-height: 1.7;
+  color: rgba(15, 23, 42, 0.64);
+`;
+
+const ContentGrid = styled.section`
+  display: grid;
+  gap: clamp(2rem, 5vw, 3rem);
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  align-items: start;
+`;
+
+const Card = styled.section`
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 32px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow: 0 28px 60px rgba(15, 23, 42, 0.08);
+  padding: clamp(2rem, 4vw, 3rem);
+  display: grid;
+  gap: clamp(1.75rem, 3vw, 2.5rem);
+  animation: ${fadeInUp} 620ms ease-out;
+  transition: transform 220ms ease, box-shadow 220ms ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 32px 70px rgba(15, 23, 42, 0.12);
+  }
+`;
+
+const CardHeading = styled.header`
+  display: grid;
+  gap: 0.5rem;
+`;
+
+const CardTitle = styled.h2`
+  margin: 0;
+  font-size: clamp(1.45rem, 3vw, 1.85rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #020617;
+`;
+
+const CardSubtitle = styled.p`
+  margin: 0;
+  font-size: 1rem;
   line-height: 1.6;
+  color: rgba(15, 23, 42, 0.58);
 `;
 
 const Form = styled.form`
   display: grid;
-  gap: clamp(1.75rem, 3vw, 2.5rem);
+  gap: clamp(1.5rem, 3vw, 2.25rem);
 `;
 
-const Fieldset = styled.fieldset`
-  border: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: clamp(1.25rem, 2vw, 1.75rem);
-`;
-
-const Legend = styled.legend`
-  font-size: 1rem;
-  font-weight: 600;
-  color: rgba(15, 23, 42, 0.58);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  margin-bottom: 0.5rem;
-`;
-
-const InputGroup = styled.div`
+const FieldBlock = styled.div`
   display: grid;
   gap: 0.65rem;
 `;
 
 const LabelRow = styled.div`
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  align-items: center;
+  gap: 1rem;
 
-  @media (max-width: 600px) {
+  @media (max-width: 520px) {
     flex-direction: column;
     align-items: flex-start;
   }
 `;
 
 const Label = styled.label`
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  color: #0f172a;
+  color: #0b1120;
 `;
 
-const HelperText = styled.span`
+const LabelHint = styled.span`
   font-size: 0.9rem;
-  color: rgba(79, 70, 229, 0.85);
+  color: rgba(37, 99, 235, 0.75);
 `;
 
-const TextInput = styled.input`
+const InputShell = styled.div`
+  position: relative;
+`;
+
+const Input = styled.input`
   width: 100%;
-  padding: 0.95rem 1.05rem;
-  border-radius: 16px;
-  border: 1.5px solid rgba(148, 163, 184, 0.4);
+  padding: 1rem 1.1rem;
+  border-radius: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
   background: rgba(255, 255, 255, 0.92);
-  color: #0f172a;
   font-size: 1rem;
-  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+  color: #0b1120;
+  transition: border-color 200ms ease, box-shadow 200ms ease, transform 200ms ease;
 
   &:hover {
-    border-color: rgba(99, 102, 241, 0.55);
+    border-color: rgba(37, 99, 235, 0.45);
   }
 
   &:focus-visible {
     outline: none;
-    border-color: rgba(99, 102, 241, 0.75);
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+    border-color: rgba(37, 99, 235, 0.7);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.18);
     transform: translateY(-1px);
   }
 
   &[aria-invalid='true'] {
     border-color: rgba(220, 38, 38, 0.7);
-    box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.35);
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.22);
   }
 `;
 
-const PasswordInputWrapper = styled.div`
-  position: relative;
-`;
-
-const ToggleSecretButton = styled.button`
+const ToggleButton = styled.button`
   position: absolute;
-  right: 0.8rem;
+  right: 0.85rem;
   top: 50%;
   transform: translateY(-50%);
   border: none;
   background: none;
-  color: rgba(79, 70, 229, 0.9);
+  color: rgba(37, 99, 235, 0.85);
+  font-weight: 600;
   cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 10px;
-  transition: background 160ms ease;
+  padding: 0.35rem 0.55rem;
+  border-radius: 999px;
+  transition: background 160ms ease, color 160ms ease;
 
-  &:hover {
-    background: rgba(99, 102, 241, 0.12);
-  }
-
+  &:hover,
   &:focus-visible {
+    background: rgba(37, 99, 235, 0.12);
+    color: rgba(37, 99, 235, 1);
     outline: none;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.35);
   }
 `;
 
 const Select = styled.select`
   width: 100%;
-  padding: 0.95rem 1.05rem;
-  border-radius: 16px;
-  border: 1.5px solid rgba(148, 163, 184, 0.4);
+  padding: 1rem 1.1rem;
+  border-radius: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
   background: rgba(255, 255, 255, 0.92);
-  color: #0f172a;
   font-size: 1rem;
-  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+  color: #0b1120;
+  transition: border-color 200ms ease, box-shadow 200ms ease, transform 200ms ease;
 
   &:hover {
-    border-color: rgba(99, 102, 241, 0.55);
+    border-color: rgba(37, 99, 235, 0.45);
   }
 
   &:focus-visible {
     outline: none;
-    border-color: rgba(99, 102, 241, 0.75);
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+    border-color: rgba(37, 99, 235, 0.7);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.18);
     transform: translateY(-1px);
   }
 `;
 
-const HelperPanel = styled.div`
+const HelperNote = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.85rem;
+  gap: 0.75rem;
   font-size: 0.92rem;
-  color: rgba(15, 23, 42, 0.7);
-  background: rgba(99, 102, 241, 0.08);
-  border-radius: 14px;
-  padding: 0.85rem 1rem;
-  line-height: 1.5;
-
-  @media (max-width: 600px) {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+  color: rgba(15, 23, 42, 0.65);
+  background: rgba(37, 99, 235, 0.08);
+  border-radius: 18px;
+  padding: 0.85rem 1.1rem;
 `;
 
 const Accent = styled.span`
   font-weight: 600;
-  color: #4f46e5;
+  color: rgba(37, 99, 235, 0.9);
 `;
 
-const ErrorMessage = styled.span`
-  color: #dc2626;
+const ErrorText = styled.span`
+  color: #d92d20;
   font-size: 0.88rem;
-  line-height: 1.4;
+  line-height: 1.45;
 `;
 
 const ButtonRow = styled.div`
@@ -219,124 +271,127 @@ const ButtonRow = styled.div`
 `;
 
 const Button = styled.button`
-  min-width: 150px;
-  padding: 0.9rem 1.8rem;
+  min-width: 160px;
+  padding: 0.95rem 1.9rem;
   border-radius: 999px;
+  border: none;
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
-  border: none;
-  transition: transform 180ms ease, box-shadow 180ms ease, background 200ms ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  box-shadow: 0 18px 36px rgba(79, 70, 229, 0.18);
+  transition: transform 220ms ease, box-shadow 220ms ease, background 220ms ease;
 
   &:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.35);
-    transform: translateY(-1px) scale(0.99);
-  }
-
-  @media (max-width: 600px) {
-    width: 100%;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
   }
 `;
 
 const PrimaryButton = styled(Button)`
-  background: linear-gradient(120deg, #6366f1, #8b5cf6 48%, #a855f7);
+  background: linear-gradient(135deg, #2563eb 0%, #60a5fa 50%, #93c5fd 100%);
   color: white;
+  box-shadow: 0 24px 48px rgba(37, 99, 235, 0.25);
 
   &:hover {
-    transform: translateY(-2px) scale(1.01);
-    box-shadow: 0 18px 36px rgba(99, 102, 241, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 28px 60px rgba(37, 99, 235, 0.32);
   }
 `;
 
 const SecondaryButton = styled(Button)`
-  background: rgba(255, 255, 255, 0.8);
-  color: #4f46e5;
-  border: 1.5px solid rgba(99, 102, 241, 0.25);
-  box-shadow: 0 16px 30px rgba(99, 102, 241, 0.14);
+  background: rgba(255, 255, 255, 0.9);
+  color: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
 
   &:hover {
-    transform: translateY(-2px) scale(1.01);
-    background: rgba(255, 255, 255, 0.95);
+    transform: translateY(-2px);
+    background: white;
+    box-shadow: 0 24px 52px rgba(15, 23, 42, 0.16);
   }
 `;
 
-const StatusMessage = styled.p`
+const StatusBanner = styled.p`
   margin: 0;
   font-size: 0.95rem;
-  color: ${(props) => (props.$status === 'success' ? '#15803d' : '#dc2626')};
-  background: ${(props) =>
-    props.$status === 'success'
-      ? 'rgba(34, 197, 94, 0.12)'
-      : 'rgba(248, 113, 113, 0.15)'};
-  border: 1px solid
-    ${(props) => (props.$status === 'success' ? 'rgba(34, 197, 94, 0.3)' : 'rgba(248, 113, 113, 0.35)')};
-  padding: 0.85rem 1rem;
-  border-radius: 14px;
-`;
-
-const ResultSection = styled.section`
-  display: grid;
-  gap: 1.1rem;
-  background: rgba(14, 116, 144, 0.07);
-  border: 1px solid rgba(13, 148, 136, 0.24);
   border-radius: 18px;
-  padding: clamp(1.5rem, 3vw, 2rem);
+  padding: 0.85rem 1rem;
+  border: 1px solid
+    ${(props) =>
+      props.$status === 'success' ? 'rgba(34, 197, 94, 0.32)' : 'rgba(220, 38, 38, 0.26)'};
+  background:
+    ${(props) =>
+      props.$status === 'success' ? 'rgba(34, 197, 94, 0.14)' : 'rgba(248, 113, 113, 0.18)'};
+  color: ${(props) => (props.$status === 'success' ? '#166534' : '#b42318')};
 `;
 
-const ResultHeading = styled.h2`
-  margin: 0;
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: #0f172a;
+const PreviewPanel = styled(Card)`
+  background: rgba(255, 255, 255, 0.88);
+  animation-delay: 80ms;
 `;
 
-const CodeDisplay = styled.code`
-  font-size: clamp(1.35rem, 3vw, 1.65rem);
-  font-weight: 700;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-  background: rgba(15, 118, 110, 0.16);
-  color: #0f766e;
-  border-radius: 14px;
-  padding: 0.9rem 1.2rem;
-  text-align: center;
-  display: block;
-  box-shadow: inset 0 0 0 1px rgba(13, 148, 136, 0.28);
-`;
-
-const DetailsList = styled.dl`
-  margin: 0;
-  display: grid;
-  gap: 0.6rem;
-`;
-
-const DetailRow = styled.div`
+const PreviewHeader = styled.div`
   display: grid;
   gap: 0.35rem;
-  align-items: baseline;
+`;
+
+const PreviewTitle = styled.h3`
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #020617;
+`;
+
+const PreviewMeta = styled.span`
+  font-size: 0.9rem;
+  color: rgba(15, 23, 42, 0.55);
+`;
+
+const CodeBadge = styled.code`
+  display: block;
+  margin: 1rem 0;
+  padding: 1rem 1.25rem;
+  border-radius: 20px;
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.18);
+  font-family: 'JetBrains Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
+  font-size: clamp(1.3rem, 3vw, 1.55rem);
+  letter-spacing: 0.32em;
+  text-align: center;
+  color: #1d4ed8;
+`;
+
+const DetailList = styled.dl`
+  margin: 0;
+  display: grid;
+  gap: 1rem;
+`;
+
+const DetailItem = styled.div`
+  display: grid;
+  gap: 0.35rem;
 
   @media (min-width: 640px) {
-    grid-template-columns: max-content 1fr;
+    grid-template-columns: 160px 1fr;
+    align-items: baseline;
     gap: 1.5rem;
   }
 `;
 
 const DetailTerm = styled.dt`
+  font-size: 0.95rem;
   font-weight: 600;
-  color: rgba(15, 23, 42, 0.72);
+  color: rgba(15, 23, 42, 0.6);
 `;
 
 const DetailDescription = styled.dd`
   margin: 0;
-  font-family: 'JetBrains Mono', 'Fira Code', 'SFMono-Regular', Menlo, Monaco, Consolas,
-    'Liberation Mono', 'Courier New', monospace;
-  color: rgba(15, 23, 42, 0.85);
+  font-size: 0.95rem;
+  color: rgba(15, 23, 42, 0.9);
   word-break: break-word;
 `;
 
@@ -360,8 +415,7 @@ const sanitizeMachineCode = (value = '') =>
     .slice(0, MACHINE_CODE_HEX_LENGTH)
     .padEnd(MACHINE_CODE_HEX_LENGTH, '0');
 
-const formatMachineCodeSegments = (hexString) =>
-  hexString.match(/.{1,4}/g).join('-');
+const formatMachineCodeSegments = (hexString) => hexString.match(/.{1,4}/g).join('-');
 
 const machineCodePattern = /^[A-F0-9]{4}(-[A-F0-9]{4}){3}$/i;
 
@@ -444,95 +498,82 @@ function App() {
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-    const nextValue = name === 'machineCode' ? value.toUpperCase() : value;
-    const updatedFormData = {
+    let nextValue = value;
+
+    if (name === 'machineCode') {
+      const sanitized = sanitizeMachineCode(value);
+      nextValue = formatMachineCodeSegments(sanitized);
+    }
+
+    const nextState = {
       ...formData,
       [name]: nextValue,
     };
 
     if (name === 'expiryOption' && value !== 'custom') {
-      updatedFormData.customDate = '';
+      nextState.customDate = '';
     }
 
-    setFormData(updatedFormData);
+    setFormData(nextState);
 
-    setErrors((prev) => {
-      const nextErrors = {
+    if (errors[name]) {
+      setErrors((prev) => ({
         ...prev,
-        [name]: validateField(name, nextValue, updatedFormData),
-      };
-
-      if (name === 'expiryOption' && value !== 'custom') {
-        nextErrors.customDate = '';
-      }
-
-      return nextErrors;
-    });
-
-    setStatus(null);
+        [name]: validateField(name, nextValue, nextState),
+      }));
+    }
   };
 
   const handleBlur = (event) => {
     const { name, value } = event.target;
-    setErrors((prev) => ({
-      ...prev,
-      [name]: validateField(name, value, formData),
-    }));
-  };
-
-  const validateForm = () => {
-    const nextErrors = {
-      machineCode: validateField('machineCode', formData.machineCode, formData),
-      secretKey: validateField('secretKey', formData.secretKey, formData),
-      customDate: validateField('customDate', formData.customDate, formData),
-    };
-
-    const filteredErrors = Object.fromEntries(
-      Object.entries(nextErrors).filter(([, message]) => Boolean(message))
-    );
-
-    setErrors(filteredErrors);
-    return Object.keys(filteredErrors).length === 0;
+    const message = validateField(name, value);
+    setErrors((prev) => ({ ...prev, [name]: message }));
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (!validateForm()) {
-      setStatus({ type: 'error', message: '表单存在错误，请检查红色提示后重新提交。' });
-      setActivation(null);
+
+    const currentErrors = Object.keys(formData).reduce((acc, field) => {
+      const message = validateField(field, formData[field]);
+      if (message) acc[field] = message;
+      return acc;
+    }, {});
+
+    setErrors(currentErrors);
+
+    if (Object.keys(currentErrors).length > 0) {
+      setStatus({ type: 'error', message: '请检查表单信息后再次提交。' });
       return;
     }
 
     const now = new Date();
-    let expiresOnLabel = '永久有效';
-    let expiryToken = 'PERMANENT';
+    let expiryToken = 'permanent';
     let resolvedDate = null;
+    let expiresOnLabel = '永久授权';
 
     switch (formData.expiryOption) {
+      case 'permanent':
+        break;
       case 'year': {
         const next = new Date(now);
         next.setFullYear(next.getFullYear() + 1);
-        expiresOnLabel = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(
-          next.getDate()
-        ).padStart(2, '0')} (一年有效)`;
         resolvedDate = next.toISOString().split('T')[0];
+        expiresOnLabel = `${resolvedDate} (一年有效)`;
         expiryToken = resolvedDate;
         break;
       }
       case 'day': {
         const next = new Date(now);
         next.setDate(next.getDate() + 1);
-        expiresOnLabel = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(
-          next.getDate()
-        ).padStart(2, '0')} (一天有效)`;
         resolvedDate = next.toISOString().split('T')[0];
+        expiresOnLabel = `${resolvedDate} (一天有效)`;
         expiryToken = resolvedDate;
         break;
       }
       case 'custom': {
+        resolvedDate = formData.customDate;
         expiresOnLabel = `${formData.customDate} (指定日期)`;
         expiryToken = formData.customDate;
-        resolvedDate = formData.customDate;
         break;
       }
       default:
@@ -589,23 +630,36 @@ function App() {
   }, [formData.expiryOption]);
 
   return (
-    <PageWrapper>
-      <GlassCard aria-labelledby="license-config-title">
-        <Header>
-          <Title id="license-config-title">许可证配置面板</Title>
-          <Subtitle>
-            输入机器码与 SECRET_KEY，选择到期策略，打造符合现代安全标准的激活体验。
-          </Subtitle>
-        </Header>
-        <Form onSubmit={handleSubmit} noValidate>
-          <Fieldset>
-            <Legend>基础信息</Legend>
-            <InputGroup>
+    <Canvas>
+      <Navigation aria-label="主导航">
+        <Brand>License Studio</Brand>
+        <NavGroup>
+          <NavItem href="#config">配置</NavItem>
+          <NavItem href="#preview">预览</NavItem>
+          <NavItem href="#support">支持</NavItem>
+        </NavGroup>
+      </Navigation>
+
+      <Hero>
+        <HeroTitle>极致简洁的许可证配置体验</HeroTitle>
+        <HeroSubtitle>
+          以现代化的流程，快速生成安全可信的激活码。轻盈的界面配合顺滑的交互，助您在每一次授权中保持专业与优雅。
+        </HeroSubtitle>
+      </Hero>
+
+      <ContentGrid>
+        <Card id="config" aria-labelledby="config-title">
+          <CardHeading>
+            <CardTitle id="config-title">激活信息</CardTitle>
+            <CardSubtitle>填写机器码与密钥，定制最适配的到期策略。</CardSubtitle>
+          </CardHeading>
+          <Form onSubmit={handleSubmit} noValidate>
+            <FieldBlock>
               <LabelRow>
                 <Label htmlFor="machineCode">机器码</Label>
-                <HelperText>示例：D977-B6F1-7EE3-1675</HelperText>
+                <LabelHint>示例：D977-B6F1-7EE3-1675</LabelHint>
               </LabelRow>
-              <TextInput
+              <Input
                 id="machineCode"
                 name="machineCode"
                 type="text"
@@ -620,15 +674,16 @@ function App() {
                 autoComplete="off"
               />
               {errors.machineCode && (
-                <ErrorMessage id="machineCode-error" role="alert">
+                <ErrorText id="machineCode-error" role="alert">
                   {errors.machineCode}
-                </ErrorMessage>
+                </ErrorText>
               )}
-            </InputGroup>
-            <InputGroup>
+            </FieldBlock>
+
+            <FieldBlock>
               <Label htmlFor="secretKey">SECRET_KEY</Label>
-              <PasswordInputWrapper>
-                <TextInput
+              <InputShell>
+                <Input
                   id="secretKey"
                   name="secretKey"
                   type={showSecret ? 'text' : 'password'}
@@ -638,37 +693,31 @@ function App() {
                   onBlur={handleBlur}
                   aria-describedby={errors.secretKey ? 'secretKey-error' : undefined}
                   aria-invalid={Boolean(errors.secretKey)}
-                  autoComplete="new-password"
                   required
                 />
-                <ToggleSecretButton
+                <ToggleButton
                   type="button"
                   onClick={() => setShowSecret((prev) => !prev)}
                   aria-pressed={showSecret}
-                  aria-label={showSecret ? '隐藏密钥' : '显示密钥'}
                 >
-                  {showSecret ? '🙈' : '👁️'}
-                </ToggleSecretButton>
-              </PasswordInputWrapper>
+                  {showSecret ? '隐藏' : '显示'}
+                </ToggleButton>
+              </InputShell>
               {errors.secretKey && (
-                <ErrorMessage id="secretKey-error" role="alert">
+                <ErrorText id="secretKey-error" role="alert">
                   {errors.secretKey}
-                </ErrorMessage>
+                </ErrorText>
               )}
-            </InputGroup>
-          </Fieldset>
+            </FieldBlock>
 
-          <Fieldset>
-            <Legend>到期时间</Legend>
-            <InputGroup>
-              <Label htmlFor="expiryOption">到期策略</Label>
+            <FieldBlock>
+              <Label htmlFor="expiryOption">有效期</Label>
               <Select
                 id="expiryOption"
                 name="expiryOption"
                 value={formData.expiryOption}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                aria-describedby="expiry-helper"
               >
                 {expiryOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -676,15 +725,12 @@ function App() {
                   </option>
                 ))}
               </Select>
-              <HelperPanel id="expiry-helper">
-                <Accent>提示</Accent>
-                <span>{activeHelper}</span>
-              </HelperPanel>
-            </InputGroup>
+            </FieldBlock>
+
             {formData.expiryOption === 'custom' && (
-              <InputGroup>
-                <Label htmlFor="customDate">指定到期日期</Label>
-                <TextInput
+              <FieldBlock>
+                <Label htmlFor="customDate">到期日期</Label>
+                <Input
                   id="customDate"
                   name="customDate"
                   type="date"
@@ -697,59 +743,92 @@ function App() {
                   required
                 />
                 {errors.customDate && (
-                  <ErrorMessage id="customDate-error" role="alert">
+                  <ErrorText id="customDate-error" role="alert">
                     {errors.customDate}
-                  </ErrorMessage>
+                  </ErrorText>
                 )}
-              </InputGroup>
+              </FieldBlock>
             )}
-          </Fieldset>
 
-          {status && (
-            <StatusMessage $status={status.type} role="status" aria-live="polite">
-              <VisuallyHidden>{status.type === 'success' ? '成功：' : '错误：'}</VisuallyHidden>
-              {status.message}
-            </StatusMessage>
-          )}
+            <HelperNote>
+              <Accent>智能提示：</Accent>
+              <span>{activeHelper}</span>
+            </HelperNote>
 
-          {activation && (
-            <ResultSection aria-live="polite">
-              <ResultHeading>激活信息</ResultHeading>
-              <CodeDisplay>{activation.code}</CodeDisplay>
-              <DetailsList>
-                <DetailRow>
+            {status && (
+              <StatusBanner role="status" $status={status.type}>
+                {status.message}
+              </StatusBanner>
+            )}
+
+            <ButtonRow>
+              <SecondaryButton type="button" onClick={handleReset}>
+                重置
+              </SecondaryButton>
+              <PrimaryButton type="submit">生成激活码</PrimaryButton>
+            </ButtonRow>
+          </Form>
+        </Card>
+
+        <PreviewPanel id="preview" aria-labelledby="preview-title">
+          <CardHeading>
+            <PreviewHeader>
+              <PreviewTitle id="preview-title">激活预览</PreviewTitle>
+              <PreviewMeta>实时呈现当前配置的激活信息。</PreviewMeta>
+            </PreviewHeader>
+          </CardHeading>
+
+          {activation ? (
+            <>
+              <VisuallyHidden>激活码</VisuallyHidden>
+              <CodeBadge>{activation.code}</CodeBadge>
+              <DetailList>
+                <DetailItem>
                   <DetailTerm>机器码</DetailTerm>
                   <DetailDescription>{activation.machineCode}</DetailDescription>
-                </DetailRow>
-                <DetailRow>
+                </DetailItem>
+                <DetailItem>
                   <DetailTerm>SECRET_KEY</DetailTerm>
                   <DetailDescription>{activation.secretKey}</DetailDescription>
-                </DetailRow>
-                <DetailRow>
-                  <DetailTerm>有效期</DetailTerm>
-                  <DetailDescription>{activation.expiryLabel}</DetailDescription>
-                </DetailRow>
+                </DetailItem>
+                <DetailItem>
+                  <DetailTerm>到期策略</DetailTerm>
+                  <DetailDescription>
+                    {activation.expiryLabel}
+                    {activation.expiresOn ? '' : '（永久）'}
+                  </DetailDescription>
+                </DetailItem>
                 {activation.expiresOn && (
-                  <DetailRow>
+                  <DetailItem>
                     <DetailTerm>到期日期</DetailTerm>
                     <DetailDescription>{activation.expiresOn}</DetailDescription>
-                  </DetailRow>
+                  </DetailItem>
                 )}
-              </DetailsList>
-            </ResultSection>
+              </DetailList>
+            </>
+          ) : (
+            <DetailList>
+              <DetailItem>
+                <DetailTerm>机器码</DetailTerm>
+                <DetailDescription>等待输入...</DetailDescription>
+              </DetailItem>
+              <DetailItem>
+                <DetailTerm>SECRET_KEY</DetailTerm>
+                <DetailDescription>待录入</DetailDescription>
+              </DetailItem>
+              <DetailItem>
+                <DetailTerm>到期策略</DetailTerm>
+                <DetailDescription>请选择或使用默认策略</DetailDescription>
+              </DetailItem>
+            </DetailList>
           )}
+        </PreviewPanel>
+      </ContentGrid>
 
-          <ButtonRow>
-            <SecondaryButton type="button" onClick={handleReset}>
-              取消
-            </SecondaryButton>
-            <PrimaryButton type="submit">
-              确认
-            </PrimaryButton>
-          </ButtonRow>
-        </Form>
-      </GlassCard>
-    </PageWrapper>
+      <footer id="support">
+        <VisuallyHidden>页脚</VisuallyHidden>
+      </footer>
+    </Canvas>
   );
 }
 
