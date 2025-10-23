@@ -15,16 +15,18 @@ const fadeIn = keyframes`
 const Shell = styled.div`
   width: min(1120px, 100%);
   display: grid;
-  gap: clamp(2.5rem, 5vw, 4rem);
-  padding: clamp(1rem, 2vw, 2rem);
+  gap: clamp(1.8rem, 4vw, 3rem);
+  padding: clamp(0.5rem, 2vw, 1.75rem);
 `;
 
 const NavBar = styled.nav`
+  width: min(960px, 100%);
+  margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: clamp(0.85rem, 2vw, 1.4rem) clamp(1rem, 2vw, 1.5rem);
-  border-radius: 22px;
+  padding: clamp(0.7rem, 1.6vw, 1.2rem) clamp(0.9rem, 2vw, 1.4rem);
+  border-radius: 20px;
   background: rgba(255, 255, 255, 0.82);
   box-shadow: 0 24px 48px rgba(15, 23, 42, 0.08);
   backdrop-filter: blur(28px);
@@ -120,7 +122,7 @@ const NavAction = styled.button`
 
 const Hero = styled.section`
   display: grid;
-  gap: 1.5rem;
+  gap: 1.2rem;
   text-align: left;
   animation: ${fadeIn} 420ms ease-out;
 `;
@@ -155,18 +157,18 @@ const HeroDescription = styled.p`
 
 const ContentGrid = styled.div`
   display: grid;
-  gap: clamp(2rem, 4vw, 3rem);
+  gap: clamp(1.6rem, 3.4vw, 2.6rem);
 `;
 
 const FormColumn = styled.div`
   display: grid;
-  gap: 1.75rem;
+  gap: 1.4rem;
 `;
 
 const Card = styled.section`
   background: rgba(255, 255, 255, 0.92);
-  border-radius: 28px;
-  padding: clamp(1.8rem, 3vw, 2.75rem);
+  border-radius: 26px;
+  padding: clamp(1.6rem, 2.6vw, 2.35rem);
   box-shadow: 0 28px 60px rgba(15, 23, 42, 0.08);
   border: 1px solid rgba(15, 23, 42, 0.05);
   backdrop-filter: blur(26px);
@@ -175,27 +177,27 @@ const Card = styled.section`
 
 const FormHeader = styled.header`
   display: grid;
-  gap: 0.65rem;
-  margin-bottom: 1.75rem;
+  gap: 0.55rem;
+  margin-bottom: 1.5rem;
 `;
 
 const FormTitle = styled.h2`
   margin: 0;
-  font-size: 1.65rem;
+  font-size: 1.58rem;
   color: #0b1f33;
   letter-spacing: -0.01em;
 `;
 
 const FormSubtitle = styled.p`
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.96rem;
   color: rgba(15, 23, 42, 0.65);
-  line-height: 1.6;
+  line-height: 1.55;
 `;
 
 const Form = styled.form`
   display: grid;
-  gap: clamp(1.5rem, 2.6vw, 2.2rem);
+  gap: clamp(1.25rem, 2.2vw, 1.9rem);
 `;
 
 const Fieldset = styled.fieldset`
@@ -203,7 +205,7 @@ const Fieldset = styled.fieldset`
   margin: 0;
   padding: 0;
   display: grid;
-  gap: clamp(1.2rem, 2vw, 1.6rem);
+  gap: clamp(1rem, 1.8vw, 1.4rem);
 `;
 
 const Legend = styled.legend`
@@ -223,7 +225,7 @@ const LabelRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.6rem;
 
   @media (max-width: 640px) {
     flex-direction: column;
@@ -244,7 +246,7 @@ const HelperText = styled.span`
 
 const TextInput = styled.input`
   width: 100%;
-  padding: 1rem 1.1rem;
+  padding: 0.9rem 1.05rem;
   border-radius: 18px;
   border: 1.5px solid rgba(148, 163, 184, 0.4);
   background: rgba(255, 255, 255, 0.92);
@@ -298,7 +300,7 @@ const ToggleSecretButton = styled.button`
 
 const Select = styled.select`
   width: 100%;
-  padding: 1rem 1.1rem;
+  padding: 0.9rem 1.05rem;
   border-radius: 18px;
   border: 1.5px solid rgba(148, 163, 184, 0.4);
   background: rgba(255, 255, 255, 0.92);
@@ -321,12 +323,12 @@ const Select = styled.select`
 const HelperPanel = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.85rem;
-  font-size: 0.92rem;
+  gap: 0.75rem;
+  font-size: 0.9rem;
   color: rgba(15, 23, 42, 0.7);
   background: rgba(37, 99, 235, 0.08);
   border-radius: 16px;
-  padding: 0.9rem 1.1rem;
+  padding: 0.8rem 1rem;
   line-height: 1.5;
 
   @media (max-width: 640px) {
@@ -349,7 +351,7 @@ const ErrorMessage = styled.span`
 const ButtonRow = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 0.85rem;
   justify-content: flex-end;
 
   @media (max-width: 640px) {
@@ -359,8 +361,8 @@ const ButtonRow = styled.div`
 `;
 
 const Button = styled.button`
-  min-width: 160px;
-  padding: 0.95rem 1.9rem;
+  min-width: 150px;
+  padding: 0.9rem 1.75rem;
   border-radius: 999px;
   font-weight: 600;
   font-size: 1rem;
@@ -420,11 +422,11 @@ const StatusMessage = styled.p`
 
 const ResultSection = styled.section`
   display: grid;
-  gap: 1.1rem;
+  gap: 1rem;
   background: rgba(13, 148, 136, 0.08);
   border: 1px solid rgba(13, 148, 136, 0.24);
   border-radius: 20px;
-  padding: clamp(1.5rem, 3vw, 2rem);
+  padding: clamp(1.35rem, 2.6vw, 1.8rem);
 `;
 
 const ResultHeading = styled.h3`
@@ -436,7 +438,7 @@ const ResultHeading = styled.h3`
 
 const ResultCodeRow = styled.div`
   display: grid;
-  gap: 0.75rem;
+  gap: 0.65rem;
 
   @media (min-width: 520px) {
     grid-template-columns: 1fr auto;
@@ -445,7 +447,7 @@ const ResultCodeRow = styled.div`
 `;
 
 const CodeDisplay = styled.code`
-  font-size: clamp(1.4rem, 3vw, 1.65rem);
+  font-size: clamp(1.32rem, 2.8vw, 1.58rem);
   font-weight: 700;
   letter-spacing: 0.25em;
   text-transform: uppercase;
@@ -459,7 +461,7 @@ const CodeDisplay = styled.code`
 `;
 
 const CopyButton = styled.button`
-  padding: 0.75rem 1.5rem;
+  padding: 0.7rem 1.45rem;
   border-radius: 999px;
   border: none;
   font-weight: 600;
