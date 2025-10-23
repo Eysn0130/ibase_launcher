@@ -4,154 +4,173 @@ import styled, { keyframes } from 'styled-components';
 const fadeIn = keyframes`
   from {
     opacity: 0;
-    transform: translateY(24px);
+    transform: translateY(28px) scale(0.98);
+    filter: blur(12px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
+    filter: blur(0);
   }
 `;
 
 const Shell = styled.div`
-  width: min(1120px, 100%);
+  width: 100%;
   display: grid;
-  gap: clamp(1.6rem, 3.6vw, 2.8rem);
-  padding: clamp(0.4rem, 1.6vw, 1.5rem);
+  gap: clamp(1rem, 2vw, 1.6rem);
+  padding: clamp(0.2rem, 0.8vw, 0.6rem) clamp(0.3rem, 1vw, 0.85rem);
+  justify-items: center;
 `;
 
-const NavBar = styled.nav`
-  width: min(1000px, 100%);
-  margin: clamp(0.05rem, 0.6vw, 0.35rem) auto 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: clamp(0.5rem, 1.2vw, 0.9rem) clamp(0.85rem, 1.9vw, 1.3rem);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.82);
-  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.08);
-  backdrop-filter: blur(28px);
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  animation: ${fadeIn} 320ms ease-out;
+const Header = styled.header`
+  position: sticky;
+  top: 8px;
+  z-index: 50;
+  background: #ffffff;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  width: 100%;
 `;
 
-const NavBrand = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-weight: 500;
-  letter-spacing: 0.015em;
-  color: #0f172a;
-  font-size: 0.95rem;
-`;
-
-const BrandMark = styled.span`
-  width: 34px;
-  height: 34px;
-  border-radius: 11px;
-  background: linear-gradient(145deg, #e0e7ff 0%, #c7d2fe 50%, #a5b4fc 100%);
+const Bar = styled.div`
+  height: 64px;
+  margin: 0 auto;
+  width: min(1120px, 95%);
   display: grid;
-  place-items: center;
-  color: #312e81;
-  font-weight: 700;
-  font-size: 0.88rem;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 20px;
+
+  @media (max-width: 720px) {
+    grid-template-columns: auto 1fr;
+    height: 56px;
+    gap: 16px;
+  }
 `;
 
-const NavLinks = styled.ul`
-  display: flex;
+const Brand = styled.div`
+  display: grid;
+  grid-auto-flow: column;
+  gap: 10px;
   align-items: center;
-  gap: clamp(1.1rem, 2.6vw, 2.1rem);
-  list-style: none;
-  margin: 0;
-  padding: 0;
 
-  @media (max-width: 860px) {
+  .logo {
+    width: 24px;
+    height: 24px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #6c47ff, #7b57ff);
+    color: #ffffff;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    font-size: 0.8rem;
+    letter-spacing: -0.02em;
+  }
+
+  .tt {
+    line-height: 1.1;
+    display: grid;
+    gap: 2px;
+  }
+
+  .title {
+    font-size: 15.5px;
+    font-weight: 600;
+    color: #0f172a;
+  }
+
+  .sub {
+    font-size: 12px;
+    color: #8a90a2;
+  }
+`;
+
+const Nav = styled.nav`
+  justify-self: center;
+  display: flex;
+  gap: 20px;
+
+  a {
+    font-size: 14px;
+    color: #5b5e72;
+    text-decoration: none;
+    transition: color 0.16s ease;
+  }
+
+  a:hover {
+    color: #23253a;
+  }
+
+  a[aria-current='page'] {
+    color: #6c47ff;
+    font-weight: 600;
+  }
+
+  @media (max-width: 720px) {
     display: none;
   }
 `;
 
-const NavLink = styled.li`
-  position: relative;
-  font-size: 0.9rem;
-  color: rgba(15, 23, 42, 0.6);
+const CTA = styled.button`
+  justify-self: end;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 10px;
+  background: #7b57ff;
+  color: #ffffff;
+  border: none;
+  transition: filter 0.16s ease;
   cursor: pointer;
-  transition: color 200ms ease;
-
-  &::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    bottom: -0.4rem;
-    width: 100%;
-    height: 2px;
-    transform: scaleX(0);
-    transform-origin: center;
-    background: linear-gradient(90deg, #6366f1, #3b82f6);
-    transition: transform 200ms ease;
-  }
 
   &:hover {
-    color: rgba(15, 23, 42, 0.9);
+    filter: brightness(1.04);
   }
 
-  &:hover::after {
-    transform: scaleX(1);
+  @media (max-width: 720px) {
+    justify-self: end;
   }
 `;
 
-const NavAction = styled.button`
-  padding: 0.6rem 1.55rem;
-  border-radius: 999px;
-  border: none;
-  background: linear-gradient(120deg, #2563eb, #4c51bf);
-  color: white;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  cursor: pointer;
-  transition: transform 200ms ease, box-shadow 200ms ease;
-  box-shadow: 0 18px 40px rgba(37, 99, 235, 0.25);
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 24px 52px rgba(37, 99, 235, 0.32);
-  }
-
-  &:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.28);
-  }
+const MainContent = styled.main`
+  width: min(1120px, 100%);
+  display: grid;
+  gap: clamp(1.2rem, 2.4vw, 2rem);
 `;
 
 const Hero = styled.section`
   display: grid;
-  gap: 1.2rem;
+  gap: 0.75rem;
   text-align: left;
   animation: ${fadeIn} 420ms ease-out;
+  max-width: 700px;
 `;
 
 const HeroBadge = styled.span`
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem;
+  padding: 0.4rem 0.85rem;
   border-radius: 999px;
-  background: rgba(37, 99, 235, 0.08);
-  color: #1d4ed8;
+  background: rgba(124, 58, 237, 0.12);
+  color: #6d28d9;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
 `;
 
 const HeroTitle = styled.h1`
   margin: 0;
-  font-size: clamp(2.5rem, 5vw, 3.4rem);
+  font-size: clamp(2.4rem, 4.8vw, 3.2rem);
   font-weight: 700;
   letter-spacing: -0.03em;
   color: #0b1f33;
+  background: linear-gradient(120deg, #312e81 0%, #7c3aed 55%, #6366f1 100%);
+  -webkit-background-clip: text;
+  color: transparent;
 `;
 
 
 const ContentGrid = styled.div`
   display: grid;
-  gap: clamp(1.6rem, 3.4vw, 2.6rem);
+  gap: clamp(1.2rem, 2.4vw, 2rem);
 `;
 
 const FormColumn = styled.div`
@@ -160,38 +179,56 @@ const FormColumn = styled.div`
 `;
 
 const Card = styled.section`
-  background: rgba(255, 255, 255, 0.92);
+  background: #ffffff;
   border-radius: 26px;
-  padding: clamp(1.6rem, 2.6vw, 2.35rem);
-  box-shadow: 0 28px 60px rgba(15, 23, 42, 0.08);
-  border: 1px solid rgba(15, 23, 42, 0.05);
-  backdrop-filter: blur(26px);
+  padding: 0;
+  box-shadow: 0 22px 48px rgba(79, 70, 229, 0.1);
+  border: 1px solid rgba(148, 163, 184, 0.22);
   animation: ${fadeIn} 460ms ease-out;
+  position: relative;
+  overflow: hidden;
+  transition: transform 220ms ease, box-shadow 220ms ease;
+
+  @media (prefers-reduced-motion: no-preference) {
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 26px 52px rgba(79, 70, 229, 0.14);
+    }
+  }
+`;
+
+const CardBody = styled.div`
+  padding: clamp(1.6rem, 2.4vw, 2.05rem);
+  display: grid;
+  gap: clamp(1.2rem, 2vw, 1.8rem);
+  background: #ffffff;
 `;
 
 const FormHeader = styled.header`
   display: grid;
-  gap: 0.55rem;
-  margin-bottom: 1.5rem;
+  gap: 0.35rem;
+  padding: clamp(1.35rem, 2.4vw, 1.8rem) clamp(1.6rem, 3vw, 2.4rem);
+  background: linear-gradient(135deg, #6d4dff 0%, #7c3aed 60%, #6366f1 100%);
+  color: #fdfcff;
 `;
 
 const FormTitle = styled.h2`
   margin: 0;
-  font-size: 1.58rem;
-  color: #0b1f33;
+  font-size: 1.5rem;
+  color: inherit;
   letter-spacing: -0.01em;
 `;
 
 const FormSubtitle = styled.p`
   margin: 0;
-  font-size: 0.96rem;
-  color: rgba(15, 23, 42, 0.65);
-  line-height: 1.55;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.6;
 `;
 
 const Form = styled.form`
   display: grid;
-  gap: clamp(1.25rem, 2.2vw, 1.9rem);
+  gap: clamp(1rem, 1.8vw, 1.6rem);
 `;
 
 const Fieldset = styled.fieldset`
@@ -199,7 +236,7 @@ const Fieldset = styled.fieldset`
   margin: 0;
   padding: 0;
   display: grid;
-  gap: clamp(1rem, 1.8vw, 1.4rem);
+  gap: clamp(0.85rem, 1.5vw, 1.25rem);
 `;
 
 const Legend = styled.legend`
@@ -207,12 +244,12 @@ const Legend = styled.legend`
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(15, 23, 42, 0.48);
+  color: rgba(76, 29, 149, 0.55);
 `;
 
 const InputGroup = styled.div`
   display: grid;
-  gap: 0.75rem;
+  gap: 0.7rem;
 `;
 
 const LabelRow = styled.div`
@@ -230,38 +267,39 @@ const LabelRow = styled.div`
 const Label = styled.label`
   font-size: 1rem;
   font-weight: 600;
-  color: rgba(15, 23, 42, 0.9);
+  color: rgba(15, 23, 42, 0.88);
 `;
 
 const HelperText = styled.span`
   font-size: 0.9rem;
-  color: rgba(37, 99, 235, 0.82);
+  color: rgba(99, 102, 241, 0.85);
 `;
 
 const TextInput = styled.input`
   width: 100%;
-  padding: 0.9rem 1.05rem;
-  border-radius: 18px;
-  border: 1.5px solid rgba(148, 163, 184, 0.4);
-  background: rgba(255, 255, 255, 0.92);
+  padding: 0.78rem 1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(248, 250, 255, 0.95);
   color: #0f172a;
   font-size: 1rem;
-  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  transition: border-color 160ms ease, box-shadow 180ms ease, background 160ms ease;
 
   &:hover {
-    border-color: rgba(37, 99, 235, 0.5);
+    border-color: rgba(124, 58, 237, 0.5);
+    background: rgba(255, 255, 255, 0.98);
   }
 
   &:focus-visible {
     outline: none;
-    border-color: rgba(37, 99, 235, 0.72);
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.18);
-    transform: translateY(-1px);
+    border-color: rgba(124, 58, 237, 0.8);
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.18);
+    background: #ffffff;
   }
 
   &[aria-invalid='true'] {
-    border-color: rgba(220, 38, 38, 0.7);
-    box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.3);
+    border-color: rgba(220, 38, 38, 0.65);
+    box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.2);
   }
 `;
 
@@ -275,42 +313,44 @@ const ToggleSecretButton = styled.button`
   top: 50%;
   transform: translateY(-50%);
   border: none;
-  background: rgba(37, 99, 235, 0.08);
-  color: #1d4ed8;
+  background: rgba(124, 58, 237, 0.12);
+  color: #6d28d9;
   cursor: pointer;
   padding: 0.35rem 0.6rem;
   border-radius: 999px;
-  transition: background 160ms ease, color 160ms ease;
+  transition: background 160ms ease, color 160ms ease, transform 200ms ease;
 
   &:hover {
-    background: rgba(37, 99, 235, 0.14);
+    background: rgba(124, 58, 237, 0.18);
+    transform: translateY(-50%) translateY(-1px);
   }
 
   &:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.28);
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.28);
   }
 `;
 
 const Select = styled.select`
   width: 100%;
-  padding: 0.9rem 1.05rem;
-  border-radius: 18px;
-  border: 1.5px solid rgba(148, 163, 184, 0.4);
-  background: rgba(255, 255, 255, 0.92);
+  padding: 0.78rem 1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(248, 250, 255, 0.95);
   color: #0f172a;
   font-size: 1rem;
-  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  transition: border-color 160ms ease, box-shadow 180ms ease, background 160ms ease;
 
   &:hover {
-    border-color: rgba(37, 99, 235, 0.5);
+    border-color: rgba(124, 58, 237, 0.5);
+    background: rgba(255, 255, 255, 0.98);
   }
 
   &:focus-visible {
     outline: none;
-    border-color: rgba(37, 99, 235, 0.72);
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.18);
-    transform: translateY(-1px);
+    border-color: rgba(124, 58, 237, 0.8);
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.18);
+    background: #ffffff;
   }
 `;
 
@@ -319,11 +359,12 @@ const HelperPanel = styled.div`
   align-items: center;
   gap: 0.75rem;
   font-size: 0.9rem;
-  color: rgba(15, 23, 42, 0.7);
-  background: rgba(37, 99, 235, 0.08);
-  border-radius: 16px;
+  color: rgba(71, 85, 105, 0.88);
+  background: rgba(236, 233, 254, 0.6);
+  border-radius: 14px;
   padding: 0.8rem 1rem;
-  line-height: 1.5;
+  line-height: 1.55;
+  border: 1px solid rgba(167, 139, 250, 0.4);
 
   @media (max-width: 640px) {
     flex-direction: column;
@@ -333,7 +374,7 @@ const HelperPanel = styled.div`
 
 const Accent = styled.span`
   font-weight: 600;
-  color: #2563eb;
+  color: #6d28d9;
 `;
 
 const ErrorMessage = styled.span`
@@ -345,7 +386,7 @@ const ErrorMessage = styled.span`
 const ButtonRow = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 0.85rem;
+  gap: 0.75rem;
   justify-content: flex-end;
 
   @media (max-width: 640px) {
@@ -355,14 +396,14 @@ const ButtonRow = styled.div`
 `;
 
 const Button = styled.button`
-  min-width: 150px;
-  padding: 0.9rem 1.75rem;
+  min-width: 148px;
+  padding: 0.85rem 1.6rem;
   border-radius: 999px;
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
   border: none;
-  transition: transform 200ms ease, box-shadow 200ms ease, background 220ms ease;
+  transition: transform 220ms ease, box-shadow 220ms ease, background 220ms ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -370,7 +411,7 @@ const Button = styled.button`
 
   &:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.28);
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.28);
     transform: translateY(-1px);
   }
 
@@ -380,54 +421,60 @@ const Button = styled.button`
 `;
 
 const PrimaryButton = styled(Button)`
-  background: linear-gradient(120deg, #2563eb, #4338ca);
+  background: linear-gradient(135deg, #7c3aed, #6366f1);
   color: white;
-  box-shadow: 0 22px 48px rgba(37, 99, 235, 0.24);
+  box-shadow: 0 18px 42px rgba(99, 102, 241, 0.25);
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 30px 60px rgba(37, 99, 235, 0.32);
+    box-shadow: 0 22px 50px rgba(99, 102, 241, 0.28);
   }
 `;
 
 const SecondaryButton = styled(Button)`
-  background: rgba(255, 255, 255, 0.88);
-  color: #1d4ed8;
-  border: 1.5px solid rgba(37, 99, 235, 0.16);
-  box-shadow: 0 22px 44px rgba(15, 23, 42, 0.08);
+  background: rgba(248, 250, 255, 0.95);
+  color: #6d28d9;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow: none;
 
   &:hover {
     transform: translateY(-2px);
-    background: rgba(255, 255, 255, 0.95);
+    background: #ffffff;
   }
 `;
 
 const StatusMessage = styled.p`
   margin: 0;
-  font-size: 0.95rem;
+  font-size: 0.94rem;
   color: ${(props) => (props.$status === 'success' ? '#166534' : '#b91c1c')};
   background: ${(props) =>
-    props.$status === 'success' ? 'rgba(34, 197, 94, 0.14)' : 'rgba(248, 113, 113, 0.16)'};
+    props.$status === 'success'
+      ? 'rgba(187, 247, 208, 0.4)'
+      : 'rgba(254, 226, 226, 0.4)'};
   border: 1px solid
-    ${(props) => (props.$status === 'success' ? 'rgba(34, 197, 94, 0.28)' : 'rgba(248, 113, 113, 0.32)')};
-  padding: 0.9rem 1.1rem;
-  border-radius: 16px;
+    ${(props) => (props.$status === 'success' ? 'rgba(74, 222, 128, 0.35)' : 'rgba(248, 113, 113, 0.32)')};
+  padding: 0.85rem 1.05rem;
+  border-radius: 14px;
+  transition: opacity 240ms ease, transform 220ms ease, padding 180ms ease, margin 180ms ease,
+    width 180ms ease;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
 `;
 
 const ResultSection = styled.section`
   display: grid;
   gap: 1rem;
-  background: rgba(13, 148, 136, 0.08);
-  border: 1px solid rgba(13, 148, 136, 0.24);
+  background: rgba(236, 233, 254, 0.7);
+  border: 1px solid rgba(167, 139, 250, 0.38);
   border-radius: 20px;
-  padding: clamp(1.35rem, 2.6vw, 1.8rem);
+  padding: clamp(1.3rem, 2.4vw, 1.75rem);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
 `;
 
 const ResultHeading = styled.h3`
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 700;
-  color: #0b1f33;
+  color: rgba(109, 76, 255, 0.95);
 `;
 
 const ResultCodeRow = styled.div`
@@ -441,39 +488,39 @@ const ResultCodeRow = styled.div`
 `;
 
 const CodeDisplay = styled.code`
-  font-size: clamp(1.32rem, 2.8vw, 1.58rem);
+  font-size: clamp(1.24rem, 2.6vw, 1.5rem);
   font-weight: 700;
-  letter-spacing: 0.25em;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
-  background: rgba(13, 148, 136, 0.16);
-  color: #0f766e;
+  background: rgba(255, 255, 255, 0.85);
+  color: #5b21b6;
   border-radius: 16px;
-  padding: 1rem 1.3rem;
+  padding: 0.9rem 1.2rem;
   text-align: center;
   display: block;
-  box-shadow: inset 0 0 0 1px rgba(13, 148, 136, 0.24);
+  box-shadow: inset 0 0 0 1px rgba(124, 58, 237, 0.3);
 `;
 
 const CopyButton = styled.button`
-  padding: 0.7rem 1.45rem;
+  padding: 0.68rem 1.4rem;
   border-radius: 999px;
   border: none;
   font-weight: 600;
   font-size: 0.95rem;
-  background: linear-gradient(120deg, #0f766e, #0d9488);
+  background: linear-gradient(135deg, #7c3aed, #6366f1);
   color: white;
   cursor: pointer;
   transition: transform 200ms ease, box-shadow 200ms ease, background 220ms ease;
-  box-shadow: 0 16px 36px rgba(13, 148, 136, 0.28);
+  box-shadow: 0 18px 42px rgba(99, 102, 241, 0.25);
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 22px 48px rgba(13, 148, 136, 0.32);
+    box-shadow: 0 22px 48px rgba(99, 102, 241, 0.28);
   }
 
   &:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.28);
+    box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.28);
     transform: translateY(-1px);
   }
 `;
@@ -486,7 +533,8 @@ const CopyControls = styled.div`
 
 const CopyFeedback = styled.span`
   font-size: 0.9rem;
-  color: rgba(13, 148, 136, 0.85);
+  color: rgba(124, 58, 237, 0.85);
+  min-height: 1.2rem;
 `;
 
 const DetailsList = styled.dl`
@@ -634,6 +682,13 @@ const deriveActivationCode = async (machineCodeHex, secretKey, expiryToken) => {
   const fallback = fallbackHash(String.fromCharCode(...data));
   return formatActivationCode(fallback);
 };
+
+const navigationItems = [
+  { label: '产品简介' },
+  { label: '激活中心' },
+  { label: '支持服务' },
+  { label: '版本日志' },
+];
 
 const featureHighlights = [
   {
@@ -828,28 +883,43 @@ function App() {
 
   return (
     <Shell>
-      <NavBar>
-        <NavBrand>
-          <BrandMark>IB</BrandMark>
-          iBase Activation Studio
-        </NavBrand>
-        <NavLinks>
-          {['产品简介', '激活中心', '支持服务', '版本日志'].map((item) => (
-            <NavLink key={item}>{item}</NavLink>
-          ))}
-        </NavLinks>
-        <NavAction type="button">联系我们</NavAction>
-      </NavBar>
+      <Header>
+        <Bar>
+          <Brand>
+            <span className="logo" aria-hidden="true">
+              iB
+            </span>
+            <div className="tt">
+              <span className="title">iBase Activation Studio</span>
+              <span className="sub">专业激活管理平台</span>
+            </div>
+          </Brand>
+          <Nav aria-label="主导航">
+            {navigationItems.map(({ label }) => (
+              <a
+                key={label}
+                href="#"
+                onClick={(event) => event.preventDefault()}
+                aria-current={label === '激活中心' ? 'page' : undefined}
+              >
+                {label}
+              </a>
+            ))}
+          </Nav>
+          <CTA type="button">联系我们</CTA>
+        </Bar>
+      </Header>
 
-      <Hero>
-        <HeroBadge>
-          <span aria-hidden="true">●</span>
-          ibm ibase 激活码授权
-        </HeroBadge>
-        <HeroTitle>iBase 激活中心</HeroTitle>
-      </Hero>
+      <MainContent>
+        <Hero>
+          <HeroBadge>
+            <span aria-hidden="true">●</span>
+            ibm ibase 激活码授权
+          </HeroBadge>
+          <HeroTitle>iBase 激活中心</HeroTitle>
+        </Hero>
 
-      <ContentGrid>
+        <ContentGrid>
         <FormColumn>
           <Card aria-labelledby="license-config-title">
             <FormHeader>
@@ -858,7 +928,8 @@ function App() {
                 输入机器码与 SECRET_KEY，灵活选择有效期策略。每一步操作都将实时反馈，保障授权流程的透明与可靠。
               </FormSubtitle>
             </FormHeader>
-            <Form onSubmit={handleSubmit} noValidate>
+            <CardBody>
+              <Form onSubmit={handleSubmit} noValidate>
               <Fieldset>
                 <Legend>基础信息</Legend>
                 <InputGroup>
@@ -1013,11 +1084,13 @@ function App() {
                   </DetailsList>
                 </ResultSection>
               )}
-            </Form>
+              </Form>
+            </CardBody>
           </Card>
         </FormColumn>
 
-      </ContentGrid>
+        </ContentGrid>
+      </MainContent>
     </Shell>
   );
 }

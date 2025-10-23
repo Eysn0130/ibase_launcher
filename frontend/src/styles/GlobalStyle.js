@@ -16,12 +16,31 @@ const GlobalStyle = createGlobalStyle`
   body {
     margin: 0;
     min-height: 100vh;
-    background: linear-gradient(160deg, #f7f9fc 0%, #edf2fb 35%, #f9fafc 100%);
+    background: linear-gradient(180deg, #f2f4ff 0%, #ffffff 55%, #ffffff 100%);
     color: #0b1f33;
-    padding: clamp(0.35rem, 1.4vw, 1.1rem) clamp(0.9rem, 3vw, 2.2rem);
+    padding: 8px clamp(16px, 3vw, 24px);
     display: flex;
     justify-content: center;
     align-items: flex-start;
+    position: relative;
+    overflow-x: hidden;
+    isolation: isolate;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: -35% -20% 0 -20%;
+    background:
+      radial-gradient(40% 35% at 20% 15%, rgba(99, 102, 241, 0.22), transparent 65%),
+      radial-gradient(45% 40% at 80% 10%, rgba(139, 92, 246, 0.18), transparent 68%),
+      radial-gradient(50% 45% at 30% 75%, rgba(56, 189, 248, 0.16), transparent 70%);
+    opacity: 0.85;
+    filter: blur(0px);
+    transform: translate3d(0, 0, 0);
+    pointer-events: none;
+    z-index: -1;
+    animation: auroraDrift 22s ease-in-out infinite alternate;
   }
 
   #root {
@@ -41,6 +60,27 @@ const GlobalStyle = createGlobalStyle`
 
   ::selection {
     background: rgba(99, 102, 241, 0.35);
+  }
+
+  @keyframes auroraDrift {
+    0% {
+      transform: translate3d(-2%, -2%, 0) scale(1.05);
+      filter: blur(0px);
+      opacity: 0.9;
+    }
+    35% {
+      transform: translate3d(2%, 1.5%, 0) scale(1.08);
+      opacity: 0.95;
+    }
+    70% {
+      transform: translate3d(-1%, 3%, 0) scale(1.03);
+      opacity: 0.88;
+    }
+    100% {
+      transform: translate3d(2%, 4%, 0) scale(1.07);
+      filter: blur(2px);
+      opacity: 0.92;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
