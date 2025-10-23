@@ -212,7 +212,7 @@ const Legend = styled.legend`
 
 const InputGroup = styled.div`
   display: grid;
-  gap: 0.65rem;
+  gap: 0.75rem;
 `;
 
 const LabelRow = styled.div`
@@ -519,6 +519,49 @@ const DetailDescription = styled.dd`
   word-break: break-word;
 `;
 
+const InfoCard = styled(Card)`
+  background: rgba(255, 255, 255, 0.86);
+  display: grid;
+  gap: 1.5rem;
+`;
+
+const InfoTitle = styled.h3`
+  margin: 0;
+  font-size: 1.3rem;
+  color: #0b1f33;
+`;
+
+const FeatureList = styled.ul`
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1.1rem;
+`;
+
+const FeatureItem = styled.li`
+  display: grid;
+  gap: 0.4rem;
+`;
+
+const FeatureName = styled.span`
+  font-weight: 600;
+  color: rgba(15, 23, 42, 0.85);
+`;
+
+const FeatureDescription = styled.span`
+  font-size: 0.95rem;
+  color: rgba(15, 23, 42, 0.6);
+  line-height: 1.6;
+`;
+
+const InfoFooter = styled.div`
+  display: grid;
+  gap: 0.5rem;
+  font-size: 0.92rem;
+  color: rgba(15, 23, 42, 0.6);
+`;
+
 const VisuallyHidden = styled.span`
   border: 0;
   clip: rect(0 0 0 0);
@@ -591,6 +634,21 @@ const deriveActivationCode = async (machineCodeHex, secretKey, expiryToken) => {
   const fallback = fallbackHash(String.fromCharCode(...data));
   return formatActivationCode(fallback);
 };
+
+const featureHighlights = [
+  {
+    title: '精准授权策略',
+    description: '按需定义有效期与密钥策略，保障企业级分发的灵活性与安全性。',
+  },
+  {
+    title: '即时反馈体验',
+    description: '流畅的交互与视觉回馈，让激活流程保持优雅且高效。',
+  },
+  {
+    title: '审计级记录',
+    description: '生成历史一目了然，便于团队追踪每一次授权变更。',
+  },
+];
 
 function App() {
   const [formData, setFormData] = useState(initialFormState);
