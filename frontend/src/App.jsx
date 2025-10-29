@@ -1015,6 +1015,12 @@ function App() {
 
   const openProductMenu = () => setIsProductMenuOpen(true);
   const closeProductMenu = () => setIsProductMenuOpen(false);
+  const handleDropdownMouseLeave = (event) => {
+    const { relatedTarget } = event;
+    if (!relatedTarget || !event.currentTarget.contains(relatedTarget)) {
+      closeProductMenu();
+    }
+  };
   const toggleProductMenu = (event) => {
     event.preventDefault();
     setIsProductMenuOpen((prev) => !prev);
@@ -1527,7 +1533,7 @@ function App() {
                     <NavItem
                       key={item.label}
                       onMouseEnter={openProductMenu}
-                      onMouseLeave={closeProductMenu}
+                      onMouseLeave={handleDropdownMouseLeave}
                       onFocus={openProductMenu}
                       onBlur={handleDropdownBlur}
                     >
