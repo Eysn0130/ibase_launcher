@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import styled, { css, keyframes } from 'styled-components';
 
 const fadeIn = keyframes`
@@ -958,6 +958,14 @@ function App() {
     return 'activation';
   });
   const [isProductMenuOpen, setIsProductMenuOpen] = useState(false);
+  const productMenuCloseTimer = useRef(null);
+
+  const clearProductMenuTimer = () => {
+    if (productMenuCloseTimer.current) {
+      clearTimeout(productMenuCloseTimer.current);
+      productMenuCloseTimer.current = null;
+    }
+  };
 
   const minDate = useMemo(() => new Date().toISOString().split('T')[0], []);
 
@@ -1013,17 +1021,36 @@ function App() {
     event.preventDefault();
   };
 
-  const openProductMenu = () => setIsProductMenuOpen(true);
-  const closeProductMenu = () => setIsProductMenuOpen(false);
+  const openProductMenu = () => {
+    clearProductMenuTimer();
+    setIsProductMenuOpen(true);
+  };
+
+  const closeProductMenu = () => {
+    clearProductMenuTimer();
+    setIsProductMenuOpen(false);
+  };
+
+  const scheduleProductMenuClose = () => {
+    clearProductMenuTimer();
+    productMenuCloseTimer.current = setTimeout(() => {
+      setIsProductMenuOpen(false);
+      productMenuCloseTimer.current = null;
+    }, 180);
+  };
   const handleDropdownMouseLeave = (event) => {
     const { relatedTarget } = event;
     if (!relatedTarget || !event.currentTarget.contains(relatedTarget)) {
-      closeProductMenu();
+      scheduleProductMenuClose();
     }
   };
   const toggleProductMenu = (event) => {
     event.preventDefault();
-    setIsProductMenuOpen((prev) => !prev);
+    if (isProductMenuOpen) {
+      scheduleProductMenuClose();
+    } else {
+      openProductMenu();
+    }
   };
 
   const handleDropdownBlur = (event) => {
@@ -1512,6 +1539,8 @@ function App() {
     return renderActivationCenter();
   };
 
+  useEffect(() => () => clearProductMenuTimer(), []);
+
   return (
     <Shell>
       <Header>
@@ -1547,7 +1576,11 @@ function App() {
                       >
                         {item.label}
                       </DropdownToggle>
-                      <DropdownMenu $open={showProductMenu}>
+                      <DropdownMenu
+                        $open={showProductMenu}
+                        onMouseEnter={openProductMenu}
+                        onMouseLeave={handleDropdownMouseLeave}
+                      >
                         {item.children.map((child) => (
                           <DropdownLink
                             key={child.label}
