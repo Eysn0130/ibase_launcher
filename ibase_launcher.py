@@ -1,12 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-iBase.exe 启动包装器 · PyQt6（无黑边·高DPI·精致UI）
-- 外层外边距=0：卡片铺满窗口圆角
-- 圆角用 QRegion + Path（无黑边、兼容高DPI）
-- 顶部横幅提示（错误提示使用横幅，复制成功展示居中提示）
-- 激活码右侧“眼睛”图标内嵌在输入框中，点击切换明/密
-- 更优中文字体优先级与微调
-- 首次激活写入配置；后续直启 iBase.exe
+iBase.exe 启动包装器 · PyQt6
 """
 import os
 import sys
@@ -1336,3 +1330,4 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+
