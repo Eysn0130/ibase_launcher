@@ -130,6 +130,8 @@ const NavItem = styled.li`
   position: relative;
   display: flex;
   align-items: center;
+  padding-bottom: 12px;
+  margin-bottom: -12px;
 `;
 
 const navItemBase = css`
