@@ -827,11 +827,12 @@ const sanitizeMachineCode = (value = '') =>
   (value || '')
     .toUpperCase()
     .replace(/[^A-F0-9]/g, '')
-    .slice(0, MACHINE_CODE_HEX_LENGTH)
-    .padEnd(MACHINE_CODE_HEX_LENGTH, '0');
+    .slice(0, MACHINE_CODE_HEX_LENGTH);
 
-const formatMachineCodeSegments = (hexString) =>
-  hexString.match(/.{1,4}/g).join('-');
+const formatMachineCodeSegments = (hexString = '') => {
+  const segments = hexString.match(/.{1,4}/g);
+  return segments ? segments.join('-') : '';
+};
 
 const machineCodePattern = /^[A-F0-9]{4}(-[A-F0-9]{4}){3}$/i;
 
@@ -1060,7 +1061,7 @@ function App() {
   };
 
   const isProductPage = productPages.has(activePage);
-  const showProductMenu = isProductMenuOpen || isProductPage;
+  const showProductMenu = isProductMenuOpen;
 
   const validateField = (name, value, data = formData) => {
     switch (name) {
